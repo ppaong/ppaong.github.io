@@ -1,0 +1,90 @@
+---
+import '../styles/tokens.css';
+import '../styles/base.css';
+import { SITE } from '../data/site';
+import SiteHeader from '../components/nav/SiteHeader.astro';
+
+interface Props {
+  /** 페이지 제목. `<title>`에 " · 사이트명" 으로 붙는다 */
+  title?: string;
+  description?: string;
+}
+
+const { title, description = SITE.description } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.title}` : `${SITE.title} — ${SITE.tagline}`;
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const year = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={SITE.locale} />
+    <meta name="twitter:card" content="summary" />
+
+    {/* M5에서 추가: <link rel="alternate" type="application/rss+xml" href="/rss.xml" /> */}
+
+    {/*
+      페인트 전에 테마를 확정해 깜빡임(FOUC)을 막는다.
+      JS가 없으면 CSS의 prefers-color-scheme 이 그대로 동작한다.
+    */}
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem('theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.dataset.theme = saved ?? (prefersDark ? 'dark' : 'light');
+        } catch {
+          /* localStorage 접근이 막힌 환경에서는 아무것도 하지 않는다 */
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+    <SiteHeader />
+
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p class="muted">© {year} {SITE.author.name}</p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  main {
+    flex: 1;
+    padding-block: var(--space-7) var(--space-9);
+  }
+  main:focus {
+    outline: none;
+  }
+  .site-footer {
+    border-block-start: 1px solid var(--color-border);
+    padding-block: var(--space-5);
+    font-size: var(--text-sm);
+  }
+</style>

@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="페이지를 찾을 수 없습니다" description="요청한 페이지가 없습니다.">
+  <div class="container">
+    <h1>404</h1>
+    <p class="prose">
+      요청한 페이지를 찾을 수 없습니다. 주소가 바뀌었거나 아직 만들어지지 않았을 수 있습니다.
+    </p>
+    <p><a href="/">블로그 홈으로</a></p>
+  </div>
+</BaseLayout>
+
+<style>
+  h1 {
+    font-size: var(--text-4xl);
+    margin-block-end: var(--space-4);
+  }
+</style>

@@ -1,0 +1,145 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+import { TRACKS } from '../data/tracks';
+
+const statusLabel: Record<string, string> = {
+  planned: '예정',
+  'in-progress': '집필 중',
+  stable: '완결',
+  archived: '보관',
+};
+---
+
+<BaseLayout>
+  <div class="container">
+    <section class="hero">
+      <p class="hero__eyebrow">{SITE.tagline}</p>
+      <h1>{SITE.title}</h1>
+      <p class="prose">{SITE.description}</p>
+    </section>
+
+    <section class="section" aria-labelledby="tracks-heading">
+      <h2 id="tracks-heading">강좌(트랙)</h2>
+
+      {
+        TRACKS.length === 0 ? (
+          <p class="empty muted">
+            아직 등록된 트랙이 없습니다. 첫 트랙과 샘플 글은 M2에서 추가됩니다.
+          </p>
+        ) : (
+          <ul class="track-grid">
+            {TRACKS.map((track) => (
+              <li class="track-card">
+                <a href={`/blog/${track.id}/`}>
+                  <span class="track-card__status">{statusLabel[track.status]}</span>
+                  <h3>{track.title}</h3>
+                  <p class="muted">{track.summary}</p>
+                  <span class="track-card__meta">난이도 {track.difficulty}/5</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </section>
+
+    <section class="section" aria-labelledby="status-heading">
+      <h2 id="status-heading">만드는 중</h2>
+      <p class="muted">
+        이 페이지는 M0(기반 세팅) 단계의 결과물입니다. 다음 순서로 채워집니다.
+      </p>
+      <ol class="roadmap">
+        <li><b>M1</b> 3컬럼 레이아웃(좌측 네비 · 본문 · 우측 패널)과 다크 모드</li>
+        <li><b>M2</b> 콘텐츠 파이프라인(스키마 검증)과 샘플 글</li>
+        <li><b>M3</b> 본문 페이지 + 우측 자료 패널</li>
+        <li><b>M4</b> 목차 그래프 페이지</li>
+        <li><b>M5</b> 검색과 최근 글</li>
+        <li><b>M6</b> 포트폴리오 · <b>M7</b> 마감</li>
+      </ol>
+      <p class="muted">
+        계획 전문은 저장소의 <code>docs/PLAN.md</code> 참고.
+      </p>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-block: var(--space-6) var(--space-8);
+    border-block-end: 1px solid var(--color-border);
+  }
+  .hero__eyebrow {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
+  }
+  .hero h1 {
+    font-size: var(--text-4xl);
+    line-height: var(--leading-tight);
+    margin-block: var(--space-2) var(--space-4);
+  }
+
+  .section {
+    padding-block: var(--space-7);
+    border-block-end: 1px solid var(--color-border);
+  }
+  .section:last-of-type {
+    border-block-end: 0;
+  }
+  .section h2 {
+    font-size: var(--text-2xl);
+    margin-block-end: var(--space-4);
+  }
+
+  .empty {
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+  }
+
+  .track-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+  }
+  .track-card a {
+    display: block;
+    height: 100%;
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--duration-base) var(--ease-out);
+  }
+  .track-card a:hover {
+    border-color: var(--color-accent);
+  }
+  .track-card h3 {
+    font-size: var(--text-lg);
+    margin-block: var(--space-1) var(--space-2);
+  }
+  .track-card__status,
+  .track-card__meta {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+  .track-card__status {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+  }
+
+  .roadmap {
+    padding-inline-start: var(--space-5);
+    font-size: var(--text-sm);
+    line-height: 2;
+  }
+</style>

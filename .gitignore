@@ -1,0 +1,23 @@
+# --- Node / Astro ---
+node_modules/
+dist/
+.astro/
+
+# --- 로그 / 환경변수 ---
+*.log
+npm-debug.log*
+.env
+.env.*
+!.env.example
+
+# --- OS / 에디터 ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- 서드파티 참고 자료 ---
+# 저작권이 있는 외부 서비스의 HTML/스크린샷은 로컬 참고용으로만 보관하고 커밋하지 않는다.
+docs/reference/codetree/
+docs/reference/private/

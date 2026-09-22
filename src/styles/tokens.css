@@ -1,0 +1,140 @@
+/* =========================================================
+   디자인 토큰 (PLAN 6.3)
+   - 색/간격/타이포는 여기서만 정의한다. 컴포넌트에 하드코딩 금지.
+   - 다크 모드는 CSS `light-dark()` + `color-scheme` 으로 해결한다.
+     → 다크 값을 한 번만 쓰면 되고, 수동 토글과 OS 설정을 모두 지원한다.
+     → 필요 브라우저: Chrome 123+ / Safari 17.5+ / Firefox 120+ (PLAN 14장 기준)
+   ========================================================= */
+
+:root {
+  /* OS 설정을 기본값으로 따른다. JS 토글이 있으면 아래 [data-theme]이 덮어쓴다. */
+  color-scheme: light dark;
+
+  /* ── 원시 팔레트 (여기만 값을 가진다) ───────────────── */
+  --gray-0: #ffffff;
+  --gray-50: #f6f8fa;
+  --gray-100: #eef1f4;
+  --gray-200: #e1e6eb;
+  --gray-300: #ced4da;
+  --gray-500: #8b949e;
+  --gray-600: #6e7781;
+  --gray-800: #2d333b;
+  --gray-900: #1f2328;
+  --gray-950: #14171a;
+
+  --blue-light: #2f6cb5;
+  --blue-light-hover: #245a9c;
+  --blue-light-weak: #eaf1f9;
+  --blue-dark: #a5c8f0;
+  --blue-dark-hover: #c2dbf7;
+  --blue-dark-weak: #1b2b3f;
+
+  --amber-light: #a16207;
+  --amber-light-bg: #fff8e6;
+  --amber-dark: #e8c07a;
+  --amber-dark-bg: #2a2318;
+
+  /* ── 시맨틱 토큰 ─────────────────────────────────────── */
+  --color-bg: light-dark(var(--gray-0), var(--gray-950));
+  --color-surface: light-dark(var(--gray-50), #1c1f23);
+  --color-surface-2: light-dark(var(--gray-100), #24282d);
+  --color-text: light-dark(var(--gray-900), #e6e9ec);
+  --color-text-muted: light-dark(var(--gray-600), #9aa4ae);
+  --color-border: light-dark(var(--gray-200), #2f343a);
+  --color-border-strong: light-dark(var(--gray-300), #3d444c);
+  --color-accent: light-dark(var(--blue-light), var(--blue-dark));
+  --color-accent-hover: light-dark(var(--blue-light-hover), var(--blue-dark-hover));
+  --color-accent-weak: light-dark(var(--blue-light-weak), var(--blue-dark-weak));
+  --color-code-bg: light-dark(var(--gray-50), #1c1f23);
+  --color-warn: light-dark(var(--amber-light), var(--amber-dark));
+  --color-warn-bg: light-dark(var(--amber-light-bg), var(--amber-dark-bg));
+
+  /* ── 타이포 ──────────────────────────────────────────── */
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'D2Coding', 'Liberation Mono',
+    Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.375rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.6;
+  --leading-prose: 1.75;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ── 간격 (4px 배수) ─────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  /* ── 레이아웃 (src/data/site.ts LAYOUT과 값이 일치해야 한다) ── */
+  --layout-nav: 260px;
+  --layout-panel: 380px;
+  --layout-panel-min: 320px;
+  --layout-panel-max: 560px;
+  --layout-prose: 44rem;
+
+  /* ── 모양 / 그림자 ──────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  --shadow-1: light-dark(
+    0 1px 2px rgb(15 23 42 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.4)
+  );
+  --shadow-2: light-dark(
+    0 4px 12px rgb(15 23 42 / 0.1),
+    0 4px 14px rgb(0 0 0 / 0.5)
+  );
+
+  /* ── 모션 ───────────────────────────────────────────── */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* ── 포커스 ─────────────────────────────────────────── */
+  --focus-ring: 0 0 0 3px var(--color-accent-weak);
+
+  /* ── z-index ────────────────────────────────────────── */
+  --z-panel: 20;
+  --z-drawer: 40;
+  --z-modal: 60;
+  --z-skip-link: 80;
+}
+
+/* 수동 토글 (JS가 html[data-theme]을 설정한다) */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* 모션 감소 (PLAN 8.6 / 10.2) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+}

@@ -1,0 +1,69 @@
+---
+/**
+ * M0 임시 헤더. M1에서 좌측 네비게이션 패널(3컬럼 레이아웃)로 재구성한다.
+ * NAV에서 아직 만들어지지 않은 경로(status: 'planned')는 링크하지 않는다 → 404 방지
+ */
+import { SITE, NAV } from '../../data/site';
+import ThemeToggle from '../ThemeToggle.astro';
+
+const links = NAV.filter((item) => item.status === 'ready');
+---
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="site-header__brand" href="/">{SITE.title}</a>
+
+    <nav class="site-header__nav" aria-label="주요">
+      <ul>
+        {
+          links.map((item) => (
+            <li>
+              <a href={item.href}>{item.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <ThemeToggle />
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-panel);
+    background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-block-end: 1px solid var(--color-border);
+  }
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-height: 3.5rem;
+  }
+  .site-header__brand {
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+  .site-header__nav {
+    margin-inline-start: auto;
+  }
+  .site-header__nav ul {
+    display: flex;
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+    font-size: var(--text-sm);
+  }
+  .site-header__nav a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+  .site-header__nav a:hover {
+    color: var(--color-text);
+  }
+</style>
