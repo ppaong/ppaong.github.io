@@ -1,0 +1,25 @@
+---
+/**
+ * 본문 강조 박스 (MDX 컴포넌트)
+ * 사용: <Callout type="tip" title="...">내용</Callout>
+ */
+interface Props {
+  type?: 'note' | 'tip' | 'warn';
+  title?: string;
+}
+
+const { type = 'note', title } = Astro.props;
+
+const defaultTitle: Record<string, string> = {
+  note: '참고',
+  tip: '알아두기',
+  warn: '주의',
+};
+
+const label = title ?? defaultTitle[type];
+---
+
+<aside class={`callout callout--${type}`}>
+  <p class="callout__title">{label}</p>
+  <div class="callout__body"><slot /></div>
+</aside>

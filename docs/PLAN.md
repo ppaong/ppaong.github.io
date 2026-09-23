@@ -277,8 +277,8 @@ content/*.mdx frontmatter
 | R5 | curriculum 레이어 비순환 (DAG) | **오류** |
 | R6 | 트랙 내 `order` 중복 금지 | **오류** |
 | R7 | `sequence`가 `order`와 모순되지 않음 | **오류** |
-| R8 | `related` 대칭성 (자동 미러 후 양쪽 일치 확인) | **오류** |
-| R9 | `materials[].id` 페이지 내 유일 + 본문 참조(`<FigureRef>`)가 실존 | **오류** |
+| R8 | `related` **역방향 선언 누락** — 그래프 빌더가 자동 미러하므로 경고로 처리 | 경고 |
+| R9 | `materials[].id` 페이지 내 유일 + 본문 참조(`<FigureRef>`)가 실존하고 **`n` 번호가 배열 순서와 일치** | **오류** |
 | R10 | `draft`는 배포 그래프에서 제외, 로컬에서는 포함 | **오류** |
 | R11 | 트랙에 속하지만 아무 간선도 없는 고아 노드 | 경고 |
 | R12 | 트랙 정의(`tracks.ts`)와 노드의 `track` 일치 | **오류** |
@@ -579,6 +579,21 @@ ppaong.github.io/
 - 상태 저장 키: `shell.nav` / `shell.panel` (모바일 오버레이는 저장하지 않음 — 화면이 작으면 항상 닫힘으로 시작)
 - 미디어쿼리는 Lightning CSS가 **range 문법**(`@media (width<=1023.98px)`)으로 출력 → 브라우저 기준(iOS Safari 17.5+) 내
 
+### 13.4 M2에서 확정한 구현 사실
+
+- **⚠️ Astro 7의 Markdown 프로세서**: 기본값이 Rust 기반 **Sätteri**로 바뀌었다. remark/rehype 생태계(KaTeX)를 쓰려면 `@astrojs/markdown-remark`의 `unified()`를 **명시적으로 선택**해야 한다.
+  ```js
+  import { unified } from '@astrojs/markdown-remark';
+  markdown: { processor: unified({ remarkPlugins: [remarkMath], rehypePlugins: [rehypeKatex] }) }
+  ```
+  `markdown.remarkPlugins` 직접 지정은 deprecated(경고만, 동작은 함). **Sätteri를 쓰면 빌드는 빠르지만 생태계 플러그인을 포기해야 한다**
+- **파일 경로 = 식별자**: `src/content/blog/<track>/<slug>.mdx` → `entry.id` = `<track>/<slug>` → URL `/blog/<track>/<slug>/`. 프론트매터에 `track`/`slug`를 중복 기재하지 않는다
+- **자료 번호(`n`) 규약**: `materials` 배열 순서가 곧 패널 번호이고, 본문 `<FigureRef n={..}>`와 일치해야 한다 → **검증 스크립트가 강제**(R9)
+- **검증 스크립트는 TypeScript로 작성**(`scripts/validate-content.ts`). Node 22.6+ 의 타입 스트리핑 덕분에 **별도 빌드 없이** `src/data/*.ts`를 그대로 import해 검증할 수 있다
+- **KaTeX 표기 주의**: MDX에서 중괄호는 특별 문자이므로 집합 기호는 `\lbrace`/`\rbrace`를 쓴다(`authoring.md` 3.1)
+- 우측 패널 기본 상태는 **열림**(6.4의 "≥1024px에서 함께 열어 둔다" 기본값). 본문의 `<FigureRef>` 클릭은 `open-panel` 커스텀 이벤트로 셸에 전달된다
+- 글 작성 방법은 **`docs/authoring.md`** 에 정리(프론트매터 표, 수식, 자료 타입별 필드, 발행 절차, 체크리스트, 자주 하는 실수)
+
 ---
 
 ## 14. 비기능 요구사항
@@ -615,14 +630,14 @@ ppaong.github.io/
 | # | 목표 | 산출물 | 수용 기준 |
 |---|---|---|---|
 | M0 | 기반 세팅 | repo init, Actions 배포, 디자인 토큰, hello 페이지 | `https://ppaong.github.io`에 페이지가 뜨고 CI가 통과 |
-| M1 | 레이아웃 골격 | BaseLayout, 3컬럼 반응형, 다크모드, 타이포 | 4개 브레이크포인트 스크린샷 확인, 키보드 토글 동작 || M2 | 콘텐츠 파이프라인 | 컬렉션+Zod, MDX 컴포넌트, 샘플 글 3개, 트랙 랜딩 | `npm run check`가 통과, 샘플 글이 배포됨 |
+| M1 | 레이아웃 골격 | BaseLayout, 3컬럼 반응형, 다크모드, 타이포 | 4개 브레이크포인트 스크린샷 확인, 키보드 토글 동작 || M2 | 콘텐츠 파이프라인 | 컬렉션+Zod, MDX 컴포넌트, 샘플 글 3개, 트랙 랜딩 | ✅ `npm run check` 통과, 샘플 글 배포 |
 | M3 | 본문 페이지 완성 | 헤더/브레드크럼, 좌 네비 트리, 스크롤스파이, **우 자료 패널**, 라이트박스, 인쇄 | 9.3 동작 스펙 체크리스트 전항목 통과 |
 | M4 | 목차(그래프) 페이지 (`/blog/toc/`) | 검증 파이프라인, 빌드타임 레이아웃, SVG 뷰, 필터/포커스/경로탐색, 텍스트·인접표 뷰 | 노드 20+ 그래프 렌더, R1~R15 통과, JS 없이 텍스트 목차 도달 |
 | M5 | 블로그 메인 (`/`) + 검색 | 소개, 트랙 카드, 추천 경로, 최근 글, **Pagefind 검색**, RSS | 메인에서 임의 글까지 2클릭 이내 + `search-spec.md` 수용 기준 10항목 |
 | M6 | 포트폴리오 (`/portfolio/`) | 스크롤 섹션, 연출, reduced-motion 대응, 이력서/연락 | reduced-motion에서 정적 열람 가능, LCP 이미지 1장 |
 | M7 | 마감 | SEO/OG/사이트맵, **분석(Umami) 연결**, Lighthouse, 접근성 감사, 404, print, `authoring.md` | Lighthouse 목표 달성, 접근성 이슈 0(치명) |
 
-> **진행 상태**: M0 ✅ 완료(2026-09-22) · M1 ✅ **구현 완료** (3컬럼 셸 · 드로어 · 바텀시트 · 집중 모드) — 4개 브레이크포인트 **시각 검증 대기**
+> **진행 상태**: M0 ✅ · M1 ✅ (시각 검증 대기) · **M2 ✅ 완료** — 다음은 M3(본문 페이지 완성 + 우측 패널 상세)
 > 의존관계: M4는 M2(데이터 모델) 완료 후 착수. M3의 우 패널은 M2의 `materials` 스키마에 의존.
 
 ---

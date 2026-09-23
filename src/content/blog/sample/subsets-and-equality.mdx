@@ -1,0 +1,100 @@
+---
+title: 부분집합과 집합의 상등
+order: 2
+summary: 한 집합이 다른 집합에 포함되는 관계(⊂), 두 집합이 같다는 것의 정의, 부분집합의 개수를 세는 방법을 다룹니다.
+status: published
+difficulty: 2
+tags: [부분집합, 상등, 기초]
+created: 2026-09-23
+links:
+  requires:
+    - sample/what-is-a-set
+  related:
+    - sample/set-operations
+materials:
+  - id: fig-subset
+    type: image
+    title: A는 B의 부분집합
+    group: 그림
+    src: /blog/sample/subset.svg
+    alt: 큰 타원 B 안에 작은 타원 A가 완전히 들어가 있고, A의 원소 1, 2와 A 밖 B 안의 원소 5가 표시되어 있다.
+    width: 320
+    height: 200
+    caption: A의 모든 원소가 B에 속하므로 A ⊂ B이다.
+    source: 자체 제작
+  - id: note-count
+    type: note
+    title: 부분집합의 개수
+    group: 정리
+    body: "원소가 n개인 집합의 부분집합은 모두 2ⁿ개이고, 그중 진부분집합은 자기 자신을 빼서 2ⁿ − 1개입니다."
+  - id: ref-khan
+    type: link
+    title: Khan Academy — 부분집합
+    group: 바깥 자료
+    href: https://ko.khanacademy.org/math/statistics-probability/probability-library/basic-set-ops
+    caption: 영상으로 다시 보고 싶을 때 유용합니다.
+    source: Khan Academy
+---
+
+## 부분집합
+
+두 집합 $A$, $B$에서 **$A$의 모든 원소가 $B$에 속할 때**, $A$를 $B$의 **부분집합**이라 하고
+
+$$
+A \subset B
+$$
+
+로 씁니다. "$A$는 $B$에 포함된다"고 읽습니다.<FigureRef id="fig-subset" n={1}>그림으로 보기</FigureRef>
+
+예를 들어 $A = \lbrace 1, 2 \rbrace$, $B = \lbrace 1, 2, 5 \rbrace$이면 $A \subset B$입니다. 반면 $C = \lbrace 1, 7 \rbrace$은 $7 \notin B$이므로 $C \subset B$가 **아닙니다**.
+
+<Callout type="note" title="공집합은 모든 집합의 부분집합">
+$\varnothing$은 원소를 하나도 가지지 않으므로, "모든 원소가 $B$에 속한다"는 조건을 **항상 만족**합니다. 따라서 $\varnothing \subset B$입니다. 헷갈리기 쉬운 부분이니 기억해 두세요.
+</Callout>
+
+## 진부분집합
+
+$A \subset B$이면서 $A$와 $B$가 서로 다를 때, $A$를 $B$의 **진부분집합**이라 합니다. 즉 $B$의 원소 중 $A$에 없는 것이 적어도 하나 있어야 합니다.
+
+$$
+A = \lbrace 1, 2 \rbrace, \quad B = \lbrace 1, 2, 5 \rbrace \quad \Rightarrow \quad A \text{는 } B \text{의 진부분집합}
+$$
+
+어떤 집합은 자기 자신의 부분집합입니다($A \subset A$). 자기 자신은 진부분집합이 아닙니다.
+
+## 집합이 서로 같다는 것
+
+두 집합 $A$, $B$가 **같은 원소**를 가질 때 $A = B$라고 합니다. 포함 관계로 표현하면 이렇게 됩니다.
+
+$$
+A = B \iff A \subset B \text{ 그리고 } B \subset A
+$$
+
+이 정의는 실제로 자주 쓰입니다. 두 집합이 같음을 보일 때는 **서로가 서로를 포함한다**는 것을 각각 보이면 되기 때문입니다. 뒤에서 배우는 드모르간 법칙도 이 방법으로 증명합니다.
+
+## 부분집합의 개수
+
+원소가 $n$개인 집합의 부분집합은 모두 몇 개일까요? 각 원소마다 **"넣는다 / 넣지 않는다"** 두 가지 선택이 있고, 그 선택이 원소마다 독립적입니다. 따라서
+
+$$
+2 \times 2 \times \cdots \times 2 = 2^n
+$$
+
+개가 됩니다.
+
+예를 들어 $B = \lbrace 1, 2, 5 \rbrace$의 부분집합은 $2^3 = 8$개입니다.
+
+$$
+\varnothing,\ \lbrace 1 \rbrace,\ \lbrace 2 \rbrace,\ \lbrace 5 \rbrace,\ \lbrace 1,2 \rbrace,\ \lbrace 1,5 \rbrace,\ \lbrace 2,5 \rbrace,\ \lbrace 1,2,5 \rbrace
+$$
+
+이 중 자기 자신인 $\lbrace 1, 2, 5 \rbrace$을 빼면 진부분집합은 $7$개입니다.
+
+## 정리
+
+- $A$의 모든 원소가 $B$에 속하면 $A \subset B$입니다.
+- 자기 자신을 제외한 부분집합을 **진부분집합**이라고 합니다.
+- $A = B$는 $A \subset B$이고 $B \subset A$인 것과 같습니다.
+- 원소가 $n$개인 집합의 부분집합은 $2^n$개입니다.
+
+다음 글에서는 두 집합을 재료로 새로운 집합을 만드는 **집합의 연산**을 다룹니다.

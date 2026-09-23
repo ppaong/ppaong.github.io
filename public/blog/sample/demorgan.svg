@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 220" width="680" height="220">
+  <defs>
+    <mask id="outsideUnion">
+      <rect x="0" y="0" width="680" height="220" fill="#fff"/>
+      <circle cx="118" cy="100" r="56" fill="#000"/>
+      <circle cx="170" cy="100" r="56" fill="#000"/>
+    </mask>
+    <mask id="insideIntersection">
+      <rect x="0" y="0" width="680" height="220" fill="#000"/>
+      <circle cx="118" cy="100" r="56" fill="#fff"/>
+      <circle cx="170" cy="100" r="56" fill="#000"/>
+    </mask>
+    <mask id="outsideA">
+      <rect x="0" y="0" width="680" height="220" fill="#fff"/>
+      <circle cx="458" cy="100" r="56" fill="#000"/>
+    </mask>
+    <mask id="outsideB">
+      <rect x="0" y="0" width="680" height="220" fill="#fff"/>
+      <circle cx="510" cy="100" r="56" fill="#000"/>
+    </mask>
+  </defs>
+
+  <g font-family="system-ui, sans-serif">
+    <!-- 왼쪽: (A ∪ B)^c -->
+    <rect x="24" y="30" width="120" height="140" fill="rgba(91,143,208,0.30)" mask="url(#outsideUnion)"/>
+    <circle cx="118" cy="100" r="56" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <circle cx="170" cy="100" r="56" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <text x="96" y="105" font-size="14" font-weight="700" fill="#5b8fd0">A</text>
+    <text x="196" y="105" font-size="14" font-weight="700" fill="#5b8fd0">B</text>
+    <text x="150" y="196" text-anchor="middle" font-size="13" fill="#8b95a3">(A ∪ B)ᶜ</text>
+
+    <text x="330" y="108" text-anchor="middle" font-size="18" font-weight="700" fill="#8b95a3">=</text>
+
+    <!-- 오른쪽: A^c ∩ B^c -->
+    <rect x="384" y="30" width="240" height="140" fill="rgba(91,143,208,0.30)" mask="url(#outsideA)"/>
+    <rect x="384" y="30" width="240" height="140" fill="rgba(91,143,208,0.30)" mask="url(#outsideB)"/>
+    <circle cx="458" cy="100" r="56" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <circle cx="510" cy="100" r="56" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <text x="436" y="105" font-size="14" font-weight="700" fill="#5b8fd0">A</text>
+    <text x="536" y="105" font-size="14" font-weight="700" fill="#5b8fd0">B</text>
+    <text x="504" y="196" text-anchor="middle" font-size="13" fill="#8b95a3">Aᶜ ∩ Bᶜ</text>
+  </g>
+</svg>

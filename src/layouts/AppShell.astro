@@ -113,7 +113,8 @@ const { panelTitle = '보조 자료' } = Astro.props;
     };
 
     let navState: 'open' | 'collapsed' = read(KEY_NAV, 'open') === 'collapsed' ? 'collapsed' : 'open';
-    let panelState: 'open' | 'closed' = read(KEY_PANEL, 'closed') === 'open' ? 'open' : 'closed';
+    // PLAN 6.4: ≥1024px 에서는 좌 nav 와 우 패널을 함께 열어 두는 것이 기본값
+    let panelState: 'open' | 'closed' = read(KEY_PANEL, 'open') === 'closed' ? 'closed' : 'open';
     let overlay: 'drawer' | 'sheet' | null = null;
 
     const isDesktop = (): boolean => mqDesktop.matches;
@@ -203,6 +204,11 @@ const { panelTitle = '보조 자료' } = Astro.props;
         event.preventDefault();
         togglePanel();
       }
+    });
+
+    // 다른 컴포넌트(예: 본문의 FigureRef)가 패널 열기를 요청할 때
+    document.addEventListener('open-panel', () => {
+      if (!panelIsOpen()) togglePanel();
     });
 
     render();

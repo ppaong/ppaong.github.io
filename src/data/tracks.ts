@@ -30,7 +30,15 @@ export interface Track {
   color?: string;
 }
 
-export const TRACKS: Track[] = [];
+export const TRACKS: Track[] = [
+  {
+    id: 'sample',
+    title: '샘플: 집합론',
+    summary: '고등학교 수준의 집합론을 짧게 정리합니다. 파이프라인 검증용 샘플 트랙입니다.',
+    difficulty: 1,
+    status: 'in-progress',
+  },
+];
 
 /** 트랙 id → Track 조회 */
 export function getTrack(id: string): Track | undefined {

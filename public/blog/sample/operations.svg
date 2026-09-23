@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" width="720" height="220">
+  <defs>
+    <mask id="onlyA">
+      <rect x="0" y="0" width="720" height="220" fill="#000"/>
+      <circle cx="78" cy="100" r="54" fill="#fff"/>
+      <circle cx="130" cy="100" r="54" fill="#000"/>
+    </mask>
+    <mask id="onlyA2">
+      <rect x="0" y="0" width="720" height="220" fill="#000"/>
+      <circle cx="318" cy="100" r="54" fill="#fff"/>
+      <circle cx="370" cy="100" r="54" fill="#000"/>
+    </mask>
+    <clipPath id="clipA">
+      <circle cx="558" cy="100" r="54"/>
+    </clipPath>
+    <clipPath id="clipA2">
+      <circle cx="318" cy="100" r="54"/>
+    </clipPath>
+  </defs>
+
+  <g font-family="system-ui, sans-serif">
+    <!-- A ∪ B : 두 원 모두 -->
+    <circle cx="78" cy="100" r="54" fill="rgba(91,143,208,0.28)" stroke="#5b8fd0" stroke-width="1.5"/>
+    <circle cx="130" cy="100" r="54" fill="rgba(91,143,208,0.28)" stroke="#5b8fd0" stroke-width="1.5"/>
+    <text x="46" y="105" font-size="14" font-weight="700" fill="#5b8fd0">A</text>
+    <text x="156" y="105" font-size="14" font-weight="700" fill="#5b8fd0">B</text>
+    <text x="104" y="196" text-anchor="middle" font-size="13" fill="#8b95a3">A ∪ B</text>
+
+    <!-- A ∩ B : 겹치는 부분만 -->
+    <circle cx="318" cy="100" r="54" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <circle cx="370" cy="100" r="54" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <circle cx="370" cy="100" r="54" fill="rgba(91,143,208,0.34)" clip-path="url(#clipA2)"/>
+    <text x="286" y="105" font-size="14" font-weight="700" fill="#5b8fd0">A</text>
+    <text x="396" y="105" font-size="14" font-weight="700" fill="#5b8fd0">B</text>
+    <text x="344" y="196" text-anchor="middle" font-size="13" fill="#8b95a3">A ∩ B</text>
+
+    <!-- A − B : A 중 B 바깥 -->
+    <circle cx="558" cy="100" r="54" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <circle cx="610" cy="100" r="54" fill="none" stroke="#5b8fd0" stroke-width="1.5"/>
+    <rect x="490" y="30" width="80" height="140" fill="rgba(91,143,208,0.34)" mask="url(#onlyA2)"/>
+    <text x="526" y="105" font-size="14" font-weight="700" fill="#5b8fd0">A</text>
+    <text x="636" y="105" font-size="14" font-weight="700" fill="#5b8fd0">B</text>
+    <text x="584" y="196" text-anchor="middle" font-size="13" fill="#8b95a3">A − B</text>
+  </g>
+</svg>

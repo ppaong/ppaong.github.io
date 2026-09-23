@@ -1,0 +1,271 @@
+---
+/**
+ * 우측 패널 내용 (PLAN 9.3 / D7)
+ * 탭 ① 문서 안내(목차 + scrollspy) ② 자료(materials[])
+ *
+ * 동작(스크립트):
+ *  - 탭 전환 상태를 localStorage 에 저장
+ *  - 본문의 [data-material-ref] 클릭 → 자료 탭으로 전환 + 해당 항목 강조/스크롤
+ *  - 자료의 '본문에서 보기' 클릭 → 본문의 참조 위치로 스크롤
+ *  - 목차 scrollspy (IntersectionObserver)
+ */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  materials: CollectionEntry<'blog'>['data']['materials'];
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { materials = [], headings = [] } = Astro.props;
+
+// 자료 번호(1부터)를 부여하고 그룹 순서를 보존한다
+const indexed = materials.map((m, i) => ({ ...m, n: i + 1 }));
+const groups = [...new Set(indexed.map((m) => m.group ?? '자료'))];
+const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+<div id="material-panel">
+  <div class="panel-tabs" role="tablist" aria-label="패널 보기 전환">
+  <button
+    type="button"
+    role="tab"
+    id="tab-toc"
+    data-panel-tab="toc"
+    aria-controls="view-toc"
+    aria-selected="true"
+    class="panel-tab"
+  >
+    문서 안내
+  </button>
+  <button
+    type="button"
+    role="tab"
+    id="tab-materials"
+    data-panel-tab="materials"
+    aria-controls="view-materials"
+    aria-selected="false"
+    class="panel-tab"
+    tabindex="-1"
+  >
+    자료
+    <span class="panel-tab__count">{indexed.length}</span>
+  </button>
+</div>
+
+<div class="panel-views">
+  <section id="view-toc" data-panel-view="toc" role="tabpanel" aria-labelledby="tab-toc">
+    {
+      tocItems.length === 0 ? (
+        <p class="panel-empty">이 문서에는 소제목이 없습니다.</p>
+      ) : (
+        <ol class="toc-list">
+          {tocItems.map((h) => (
+            <li class={h.depth === 3 ? 'toc-item toc-item--sub' : 'toc-item'}>
+              <a href={`#${h.slug}`} data-toc-link={h.slug}>
+                {h.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </section>
+
+  <section
+    id="view-materials"
+    data-panel-view="materials"
+    role="tabpanel"
+    aria-labelledby="tab-materials"
+    hidden
+  >
+    {
+      indexed.length === 0 ? (
+        <p class="panel-empty">이 글에는 등록된 보조 자료가 없습니다.</p>
+      ) : (
+        <>
+          {groups.length > 1 && (
+            <div class="group-filter" role="group" aria-label="자료 그룹">
+              {groups.map((g, i) => (
+                <button
+                  type="button"
+                  class="group-chip"
+                  data-group-filter={g}
+                  aria-pressed={i === 0 ? 'true' : 'false'}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {indexed.map((m) => (
+            <article
+              class="material"
+              id={`material-${m.id}`}
+              data-material-id={m.id}
+              data-material-group={m.group ?? '자료'}
+            >
+              <header class="material__header">
+                <span class="material__index" aria-hidden="true">
+                  {m.n}
+                </span>
+                <h3 class="material__title">{m.title}</h3>
+                <button
+                  type="button"
+                  class="material__back"
+                  data-material-back={m.id}
+                  title="본문에서 보기"
+                  aria-label={`본문의 ${m.n}번 참조로 이동`}
+                >
+                  ↩
+                </button>
+              </header>
+
+              {
+                m.type === 'image' && m.src && (
+                  <a class="material__media" href={m.src} target="_blank" rel="noreferrer">
+                    <img
+                      src={m.src}
+                      alt={m.alt ?? ''}
+                      width={m.width}
+                      height={m.height}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </a>
+                )
+              }
+
+              {m.type === 'link' && m.href && (
+                <p class="material__link">
+                  <a href={m.href} target="_blank" rel="noreferrer">
+                    {m.href}
+                  </a>
+                </p>
+              )}
+
+              {m.type === 'note' && m.body && <p class="material__note">{m.body}</p>}
+
+              {m.caption && <p class="material__caption">{m.caption}</p>}
+              {m.source && <p class="material__source">출처: {m.source}</p>}
+            </article>
+          ))}
+        </>
+      )
+    }
+  </section>
+  </div>
+</div>
+
+<script>
+  function initPanel(): void {
+    const root = document.getElementById('material-panel');
+    if (!root) return;
+
+    const tabs = Array.from(root.querySelectorAll<HTMLElement>('[data-panel-tab]'));
+    const views = Array.from(root.querySelectorAll<HTMLElement>('[data-panel-view]'));
+    const KEY = 'panel.tab';
+
+    function selectTab(name: string, focus = false): void {
+      tabs.forEach((tab) => {
+        const on = tab.dataset.panelTab === name;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        if (on && focus) tab.focus();
+      });
+      views.forEach((view) => {
+        view.hidden = view.dataset.panelView !== name;
+      });
+      try {
+        localStorage.setItem(KEY, name);
+      } catch {
+        /* 무시 */
+      }
+    }
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => selectTab(tab.dataset.panelTab ?? 'toc'));
+      tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        event.preventDefault();
+        const dir = event.key === 'ArrowRight' ? 1 : -1;
+        const next = tabs[(i + dir + tabs.length) % tabs.length];
+        if (!next) return;
+        selectTab(next.dataset.panelTab ?? 'toc', true);
+      });
+    });
+
+    // 저장된 탭 복원 (자료가 있을 때만)
+    try {
+      const saved = localStorage.getItem(KEY);
+      if (saved && tabs.some((t) => t.dataset.panelTab === saved)) selectTab(saved);
+    } catch {
+      /* 무시 */
+    }
+
+    // 그룹 필터
+    const chips = Array.from(root.querySelectorAll<HTMLElement>('[data-group-filter]'));
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const group = chip.dataset.groupFilter;
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+        root.querySelectorAll<HTMLElement>('[data-material-group]').forEach((item) => {
+          item.hidden = group !== 'all' && item.dataset.materialGroup !== group;
+        });
+      });
+    });
+
+    // 본문 → 패널
+    document.querySelectorAll<HTMLElement>('[data-material-ref]').forEach((ref) => {
+      ref.addEventListener('click', () => {
+        const id = ref.dataset.materialRef;
+        if (!id) return;
+        selectTab('materials');
+        const item = root.querySelector<HTMLElement>(`#material-${CSS.escape(id)}`);
+        if (!item) return;
+        // 그룹 필터에 가려져 있으면 되돌린다
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.groupFilter === 'all')));
+        root.querySelectorAll<HTMLElement>('[data-material-group]').forEach((el) => {
+          el.hidden = false;
+        });
+        document.dispatchEvent(new CustomEvent('open-panel'));
+        item.classList.add('is-highlighted');
+        item.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        window.setTimeout(() => item.classList.remove('is-highlighted'), 1600);
+      });
+    });
+
+    // 패널 → 본문
+    root.querySelectorAll<HTMLElement>('[data-material-back]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.materialBack;
+        if (!id) return;
+        const target = document.querySelector<HTMLElement>(`[data-material-ref="${CSS.escape(id)}"]`);
+        target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target?.focus({ preventScroll: true });
+      });
+    });
+
+    // 문서 목차 scrollspy
+    const links = Array.from(root.querySelectorAll<HTMLElement>('[data-toc-link]'));
+    if (links.length > 0 && 'IntersectionObserver' in window) {
+      const byId = new Map(links.map((l) => [l.dataset.tocLink ?? '', l]));
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const link = byId.get(entry.target.id);
+            links.forEach((l) => l.removeAttribute('aria-current'));
+            link?.setAttribute('aria-current', 'true');
+          });
+        },
+        { rootMargin: '0px 0px -70% 0px', threshold: 0 },
+      );
+      document.querySelectorAll('article.prose h2[id], article.prose h3[id]').forEach((h) => {
+        observer.observe(h);
+      });
+    }
+  }
+
+  initPanel();
+</script>

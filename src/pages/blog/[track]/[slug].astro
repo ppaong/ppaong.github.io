@@ -1,0 +1,105 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AppShell from '../../../layouts/AppShell.astro';
+import MaterialPanel from '../../../components/materials/MaterialPanel.astro';
+import Callout from '../../../components/blog/Callout.astro';
+import FigureRef from '../../../components/blog/FigureRef.astro';
+import { getTrack } from '../../../data/tracks';
+import 'katex/dist/katex.min.css';
+import '../../../styles/article.css';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) =>
+    import.meta.env.PROD ? data.status !== 'draft' : true,
+  );
+  return posts.map((post) => {
+    const [track, ...rest] = post.id.split('/');
+    return { params: { track, slug: rest.join('/') }, props: { post } };
+  });
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+
+const [trackId = ''] = post.id.split('/');
+const track = getTrack(trackId);
+
+// 트랙 내 이전/다음 글
+const siblings = (await getCollection('blog', ({ data }) => data.status !== 'draft'))
+  .filter((p) => p.id.split('/')[0] === trackId)
+  .sort((a, b) => a.data.order - b.data.order);
+const index = siblings.findIndex((p) => p.id === post.id);
+const prev = index > 0 ? siblings[index - 1] : undefined;
+const next = index >= 0 && index < siblings.length - 1 ? siblings[index + 1] : undefined;
+
+const dateFmt = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'long' });
+const charCount = (post.body ?? '').replace(/\s/g, '').length;
+const minutes = Math.max(1, Math.round(charCount / 500));
+const panelTitle = `${track?.title ?? trackId} · ${index + 1}/${siblings.length}`;
+---
+
+<BaseLayout shell title={post.data.title} description={post.data.summary}>
+  <AppShell panelTitle={panelTitle}>
+    <article class="article">
+      <header class="article__header">
+        <p class="article__breadcrumb">
+          <a href="/">블로그</a> › <a href={`/blog/${trackId}/`}>{track?.title ?? trackId}</a>
+        </p>
+        <h1 class="article__title">{post.data.title}</h1>
+        <p class="article__summary">{post.data.summary}</p>
+
+        <div class="article__meta">
+          <span>{index + 1} / {siblings.length}번째 글</span>
+          {post.data.difficulty && <span>난이도 {post.data.difficulty}/5</span>}
+          <span>약 {minutes}분</span>
+          <span>
+            <time datetime={post.data.created.toISOString()}>{dateFmt.format(post.data.created)}</time>
+            {post.data.updated && (
+              <> (수정 {dateFmt.format(post.data.updated)})</>
+            )}
+          </span>
+        </div>
+
+        {
+          post.data.tags.length > 0 && (
+            <ul class="article__tags">
+              {post.data.tags.map((tag) => (
+                <li>{tag}</li>
+              ))}
+            </ul>
+          )
+        }
+      </header>
+
+      <div class="article__body">
+        <Content components={{ Callout, FigureRef }} />
+      </div>
+
+      <nav class="article__nav" aria-label="트랙 내 이동">
+        {
+          prev ? (
+            <a href={`/blog/${prev.id}/`}>
+              <small>← 이전 글</small>
+              {prev.data.title}
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next ? (
+            <a href={`/blog/${next.id}/`} style="text-align:end">
+              <small>다음 글 →</small>
+              {next.data.title}
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
+    </article>
+
+    <MaterialPanel slot="panel" materials={post.data.materials} headings={headings} />
+  </AppShell>
+</BaseLayout>

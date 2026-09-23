@@ -1,0 +1,26 @@
+---
+/**
+ * 본문 ↔ 우측 패널 연결 (9.3-2)
+ * 클릭하면 우측 패널이 열리고 해당 자료로 스크롤한다.
+ *
+ * 사용: <FigureRef id="fig-venn" n={1}>벤다이어그램</FigureRef>
+ *   id — materials[].id 와 일치해야 한다
+ *   n  — 패널에 표시되는 자료 번호(1부터). 검증 스크립트가 일치 여부를 확인한다
+ */
+interface Props {
+  id: string;
+  n?: number;
+}
+
+const { id, n } = Astro.props;
+---
+
+<button
+  type="button"
+  class="figure-ref"
+  data-material-ref={id}
+  aria-label={`보조 자료${n ? ` ${n}번` : ''} 열기`}
+>
+  <span class="figure-ref__badge" aria-hidden="true">{n ?? '자료'}</span>
+  <span class="figure-ref__label"><slot /></span>
+</button>

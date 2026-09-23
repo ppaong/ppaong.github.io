@@ -1,17 +1,31 @@
 ---
 /**
  * 좌측 네비게이션 패널 (PLAN 5.1)
- * 2블록 구성: ① 고정 블록(사이트 경로) ② 트랙 트리
+ * 2블록 구성: ① 고정 블록(사이트 경로) ② 트랙 트리(트랙 → 글)
  * 문서 내 목차는 여기 두지 않는다 (D7: 우측 패널 첫 탭)
  *
  * 데스크톱에서는 고정 컬럼, <1024px 에서는 드로어로 동작한다(layout.css).
  */
+import { getCollection } from 'astro:content';
 import { NAV } from '../../data/site';
 import { TRACKS } from '../../data/tracks';
 
 const pathname = Astro.url.pathname;
 const isCurrent = (href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+const posts = await getCollection('blog', ({ data }) =>
+  import.meta.env.PROD ? data.status !== 'draft' : true,
+);
+
+const tree = TRACKS.map((track) => ({
+  track,
+  posts: posts
+    .filter((p) => p.id.split('/')[0] === track.id)
+    .sort((a, b) => a.data.order - b.data.order),
+}));
+
+const isCurrentPost = (id: string) => pathname === `/blog/${id}/`;
 ---
 
 <aside class="nav-panel" id="site-nav" aria-label="사이트 네비게이션">
@@ -43,18 +57,29 @@ const isCurrent = (href: string) =>
     </nav>
 
     <div class="nav-section nav-tree">
-      <p class="nav-heading" id="nav-track-heading">트랙</p>
+      <p class="nav-heading">트랙</p>
       {
-        TRACKS.length === 0 ? (
-          <p class="nav-empty" aria-labelledby="nav-track-heading">
-            아직 트랙이 없습니다.
-          </p>
+        tree.length === 0 ? (
+          <p class="nav-empty">아직 트랙이 없습니다.</p>
         ) : (
-          TRACKS.map((track) => (
+          tree.map(({ track, posts: trackPosts }) => (
             <details class="nav-track" open>
-              <summary>{track.title}</summary>
+              <summary>
+                <a href={`/blog/${track.id}/`}>{track.title}</a>
+                <span class="nav-count">{trackPosts.length}</span>
+              </summary>
               <ul>
-                {/* M2에서 글 목록을 렌더한다 */}
+                {trackPosts.map((post) => (
+                  <li>
+                    <a
+                      class="nav-link"
+                      href={`/blog/${post.id}/`}
+                      aria-current={isCurrentPost(post.id) ? 'page' : undefined}
+                    >
+                      {post.data.title}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </details>
           ))
@@ -70,12 +95,28 @@ const isCurrent = (href: string) =>
     color: var(--color-text-muted);
     padding-inline: var(--space-3);
   }
-  .nav-badge {
+  .nav-badge,
+  .nav-count {
     margin-inline-start: auto;
     font-size: 0.6875rem;
+    color: var(--color-text-muted);
+  }
+  .nav-badge {
     padding: 0.1em 0.4em;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-full);
     white-space: nowrap;
+  }
+  .nav-track > summary a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .nav-track > summary a:hover {
+    text-decoration: underline;
+  }
+  .nav-tree .nav-link {
+    padding-block: var(--space-1);
+    font-size: 0.9375em;
+    line-height: 1.45;
   }
 </style>

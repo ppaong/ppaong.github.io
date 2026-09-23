@@ -1,0 +1,161 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AppShell from '../../../layouts/AppShell.astro';
+import { TRACKS, getTrack } from '../../../data/tracks';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) =>
+    import.meta.env.PROD ? data.status !== 'draft' : true,
+  );
+  const trackIds = [...new Set(posts.map((p) => p.id.split('/')[0]))];
+  return trackIds.map((track) => ({ params: { track }, props: { track } }));
+}
+
+const trackId = String(Astro.params.track ?? '');
+const track = getTrack(trackId);
+
+const posts = (await getCollection('blog', ({ data }) =>
+  import.meta.env.PROD ? data.status !== 'draft' : true,
+))
+  .filter((p) => p.id.split('/')[0] === trackId)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const otherTracks = TRACKS.filter((t) => t.id !== trackId);
+---
+
+<BaseLayout shell title={track?.title ?? trackId} description={track?.summary ?? ''}>
+  <AppShell panelTitle="트랙 정보">
+    <header class="track-header">
+      <p class="track-header__eyebrow">트랙</p>
+      <h1>{track?.title ?? trackId}</h1>
+      <p class="track-header__summary">{track?.summary}</p>
+      <div class="track-header__meta">
+        {track && <span>난이도 {track.difficulty}/5</span>}
+        <span>글 {posts.length}편</span>
+        {track && <span>{track.status}</span>}
+      </div>
+    </header>
+
+    <ol class="post-list">
+      {
+        posts.map((post, i) => (
+          <li class="post-item">
+            <a href={`/blog/${post.id}/`}>
+              <span class="post-item__n">{String(i + 1).padStart(2, '0')}</span>
+              <span class="post-item__body">
+                <strong>{post.data.title}</strong>
+                <span class="post-item__summary">{post.data.summary}</span>
+              </span>
+              {post.data.difficulty && (
+                <span class="post-item__meta">난이도 {post.data.difficulty}/5</span>
+              )}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+
+    {
+      otherTracks.length > 0 && (
+        <section class="other-tracks">
+          <h2>다른 트랙</h2>
+          <ul>
+            {otherTracks.map((t) => (
+              <li>
+                <a href={`/blog/${t.id}/`}>{t.title}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <p slot="panel" class="muted">
+      트랙의 글을 순서대로 읽으면 됩니다. 각 글의 선수 관계는 M4의 목차 그래프에서 확인할 수 있습니다.
+    </p>
+  </AppShell>
+</BaseLayout>
+
+<style>
+  .track-header {
+    padding-block-end: var(--space-5);
+    margin-block-end: var(--space-5);
+    border-block-end: 1px solid var(--color-border);
+  }
+  .track-header__eyebrow {
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  .track-header h1 {
+    font-size: var(--text-3xl);
+    margin-block: var(--space-2) var(--space-3);
+  }
+  .track-header__summary {
+    max-width: var(--layout-prose);
+    color: var(--color-text-muted);
+    line-height: var(--leading-prose);
+  }
+  .track-header__meta {
+    display: flex;
+    gap: var(--space-4);
+    margin-block-start: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .post-list {
+    list-style: none;
+    padding: 0;
+    max-width: var(--layout-prose);
+  }
+  .post-item + .post-item {
+    border-block-start: 1px solid var(--color-border);
+  }
+  .post-item a {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-2);
+    text-decoration: none;
+    color: inherit;
+  }
+  .post-item a:hover {
+    background: var(--color-surface);
+  }
+  .post-item__n {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .post-item__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+  .post-item__summary {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .post-item__meta {
+    margin-inline-start: auto;
+    flex: 0 0 auto;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .other-tracks h2 {
+    font-size: var(--text-lg);
+    margin-block-end: var(--space-3);
+  }
+  .other-tracks ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+</style>
