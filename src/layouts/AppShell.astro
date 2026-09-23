@@ -1,0 +1,213 @@
+---
+/**
+ * 앱 셸 — 3컬럼 레이아웃과 상태 관리 (PLAN 6.4)
+ *
+ * 상태(데스크톱): data-nav / data-panel  · 저장됨(localStorage)
+ * 상태(모바일)  : data-drawer / data-sheet · 항상 닫힘으로 시작, 동시 열기 금지
+ *
+ * 키보드: [ = 좌 nav 토글, ] = 우 패널 토글, Esc = 오버레이 닫기
+ * 모션 감소 설정에서는 CSS 토큰이 0ms가 되어 애니메이션이 사라진다.
+ */
+import '../styles/layout.css';
+import SideNav from '../components/nav/SideNav.astro';
+
+interface Props {
+  /** 우측 패널 제목 (M3에서 '문서 안내 / 자료' 탭으로 확장) */
+  panelTitle?: string;
+}
+
+const { panelTitle = '보조 자료' } = Astro.props;
+---
+
+<div
+  class="app-shell"
+  id="app-shell"
+  data-nav="open"
+  data-panel="closed"
+  data-drawer="closed"
+  data-sheet="closed"
+>
+  <SideNav />
+
+  <div class="main-col">
+    <slot />
+  </div>
+
+  <aside class="article-panel" id="article-panel" aria-label={panelTitle}>
+    <div class="article-panel__inner">
+      <div class="panel-header">
+        <span class="panel-header__title">{panelTitle}</span>
+        <button
+          type="button"
+          class="icon-button"
+          data-panel-toggle
+          data-panel-close
+          aria-label="보조 자료 패널 닫기"
+          aria-expanded="false"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="panel-body">
+        <slot name="panel">
+          <p class="panel-placeholder">이 글의 보조 자료가 여기에 표시됩니다. (M3에서 구현)</p>
+        </slot>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="scrim" data-scrim></div>
+
+<style>
+  .panel-body {
+    padding-block: var(--space-4);
+  }
+  .panel-placeholder {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    padding: var(--space-3);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md);
+  }
+</style>
+
+<script>
+  /** 앱 셸 상태 관리 (셸이 없는 페이지에서는 실행되지 않는다) */
+  function initShell(shell: HTMLElement): void {
+    const mqDesktop = window.matchMedia('(min-width: 1024px)');
+    const panelEl = document.getElementById('article-panel');
+    const navEl = document.getElementById('site-nav');
+    const scrim = document.querySelector('[data-scrim]');
+    const navToggles = document.querySelectorAll('[data-nav-toggle]');
+    const panelToggles = document.querySelectorAll('[data-panel-toggle]');
+
+    const KEY_NAV = 'shell.nav';
+    const KEY_PANEL = 'shell.panel';
+
+    const read = (key: string, fallback: string): string => {
+      try {
+        return localStorage.getItem(key) ?? fallback;
+      } catch {
+        return fallback;
+      }
+    };
+    const write = (key: string, value: string): void => {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        /* 저장 실패 무시 */
+      }
+    };
+
+    let navState: 'open' | 'collapsed' = read(KEY_NAV, 'open') === 'collapsed' ? 'collapsed' : 'open';
+    let panelState: 'open' | 'closed' = read(KEY_PANEL, 'closed') === 'open' ? 'open' : 'closed';
+    let overlay: 'drawer' | 'sheet' | null = null;
+
+    const isDesktop = (): boolean => mqDesktop.matches;
+    const navIsOpen = (): boolean => (isDesktop() ? navState === 'open' : overlay === 'drawer');
+    const panelIsOpen = (): boolean => (isDesktop() ? panelState === 'open' : overlay === 'sheet');
+
+    function syncA11y(): void {
+      const navOpen = navIsOpen();
+      const panelOpen = panelIsOpen();
+      navEl?.toggleAttribute('inert', !navOpen);
+      panelEl?.toggleAttribute('inert', !panelOpen);
+      navToggles.forEach((b) => b.setAttribute('aria-expanded', String(navOpen)));
+      panelToggles.forEach((b) => b.setAttribute('aria-expanded', String(panelOpen)));
+      // 스크림 표시와 배경 스크롤 락을 이 클래스 하나로 제어한다 (layout.css)
+      document.body.classList.toggle('has-overlay', !isDesktop() && overlay !== null);
+    }
+
+    function render(): void {
+      if (isDesktop()) {
+        overlay = null;
+        shell.dataset.nav = navState;
+        shell.dataset.panel = panelState;
+        shell.dataset.drawer = 'closed';
+        shell.dataset.sheet = 'closed';
+      } else {
+        // 모바일에서는 그리드 컬럼을 쓰지 않으므로 data-nav/data-panel 을 제거해
+        // 데스크톱용 가시성 규칙과 충돌하지 않게 한다 (layout.css 주석 참고)
+        shell.removeAttribute('data-nav');
+        shell.removeAttribute('data-panel');
+        shell.dataset.drawer = overlay === 'drawer' ? 'open' : 'closed';
+        shell.dataset.sheet = overlay === 'sheet' ? 'open' : 'closed';
+      }
+      syncA11y();
+    }
+
+    function toggleNav(): void {
+      if (isDesktop()) {
+        navState = navState === 'open' ? 'collapsed' : 'open';
+        write(KEY_NAV, navState);
+      } else {
+        overlay = overlay === 'drawer' ? null : 'drawer';
+      }
+      render();
+    }
+
+    function togglePanel(): void {
+      if (isDesktop()) {
+        panelState = panelState === 'open' ? 'closed' : 'open';
+        write(KEY_PANEL, panelState);
+      } else {
+        // 6.4: 좁은 화면에서는 좌우 동시 열기 금지
+        overlay = overlay === 'sheet' ? null : 'sheet';
+      }
+      render();
+    }
+
+    navToggles.forEach((b) => b.addEventListener('click', toggleNav));
+    panelToggles.forEach((b) => b.addEventListener('click', togglePanel));
+    scrim?.addEventListener('click', () => {
+      overlay = null;
+      render();
+    });
+
+    // 브레이크포인트를 넘어가면 오버레이는 닫는다
+    mqDesktop.addEventListener('change', () => {
+      overlay = null;
+      render();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        !!target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+
+      if (event.key === 'Escape' && !isDesktop() && overlay !== null) {
+        overlay = null;
+        render();
+        return;
+      }
+      if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (event.key === '[') {
+        event.preventDefault();
+        toggleNav();
+      } else if (event.key === ']') {
+        event.preventDefault();
+        togglePanel();
+      }
+    });
+
+    render();
+  }
+
+  const shellEl = document.getElementById('app-shell');
+  if (shellEl) initShell(shellEl);
+</script>

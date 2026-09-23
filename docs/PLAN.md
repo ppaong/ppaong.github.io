@@ -568,6 +568,17 @@ ppaong.github.io/
 - 좌측 네비게이션 데이터(`SITE.NAV`)에 `status: 'ready' | 'planned'`를 두어 **아직 없는 경로를 링크하지 않는다**(404 방지). 페이지를 만들면 `ready`로 전환
 - 빌드 결과: 페이지 2개(`/`, `/404.html`), **JS 0KB**(인라인), CSS 8KB
 
+### 13.3 M1에서 확정한 구현 사실
+
+- **3컬럼 셸**: `.app-shell`은 CSS Grid `var(--nav-w) minmax(0,1fr) var(--panel-w)` 한 줄로 구성하고, 접힘/펼침은 **커스텀 프로퍼티만 바꿔** 처리한다(`data-nav` / `data-panel`). 상태 조합이 늘어나도 규칙이 곱해지지 않는다
+- **폭이 0으로 접힐 때**: 패널에 `overflow: hidden`, 내부 래퍼에 `min-width: var(--layout-nav | --layout-panel)`을 주어 전환 중 내용 리플로우를 막는다
+- **우 패널 폭은 `--panel-current`로 덮어쓸 수 있게** 설계 → M3의 드래그 리사이즈가 이 변수만 갱신하면 된다 (panel-spec 2.1)
+- **모바일(<1024px)**: 좌 nav = 드로어, 우 패널 = 우측 시트(768px 미만은 **바텀 시트**). 이때 JS가 `data-nav`/`data-panel`을 **제거**해 데스크톱 가시성 규칙과의 명시도 충돌을 원천 차단한다
+- **접근성**: 패널이 닫히면 `inert` 부여(포커스·스크린리더 차단), 토글에 `aria-expanded`, 오버레이에 스크림 + 배경 스크롤 락
+- **집중 모드**: `[`로 좌 nav, `]`로 우 패널 토글(`CapsLock`·한글 입력 상태에서도 `event.key`가 `[`/`]`로 들어오는 것을 확인해야 함 → 미검증 항목)
+- 상태 저장 키: `shell.nav` / `shell.panel` (모바일 오버레이는 저장하지 않음 — 화면이 작으면 항상 닫힘으로 시작)
+- 미디어쿼리는 Lightning CSS가 **range 문법**(`@media (width<=1023.98px)`)으로 출력 → 브라우저 기준(iOS Safari 17.5+) 내
+
 ---
 
 ## 14. 비기능 요구사항
@@ -611,7 +622,7 @@ ppaong.github.io/
 | M6 | 포트폴리오 (`/portfolio/`) | 스크롤 섹션, 연출, reduced-motion 대응, 이력서/연락 | reduced-motion에서 정적 열람 가능, LCP 이미지 1장 |
 | M7 | 마감 | SEO/OG/사이트맵, **분석(Umami) 연결**, Lighthouse, 접근성 감사, 404, print, `authoring.md` | Lighthouse 목표 달성, 접근성 이슈 0(치명) |
 
-> **진행 상태**: M0 ✅ 완료(2026-09-22) · M1 🔄 부분 완료(디자인 토큰·다크 모드·BaseLayout 골격 · 3컬럼은 미착수)
+> **진행 상태**: M0 ✅ 완료(2026-09-22) · M1 ✅ **구현 완료** (3컬럼 셸 · 드로어 · 바텀시트 · 집중 모드) — 4개 브레이크포인트 **시각 검증 대기**
 > 의존관계: M4는 M2(데이터 모델) 완료 후 착수. M3의 우 패널은 M2의 `materials` 스키마에 의존.
 
 ---

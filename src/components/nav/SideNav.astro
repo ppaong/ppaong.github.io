@@ -1,0 +1,81 @@
+---
+/**
+ * 좌측 네비게이션 패널 (PLAN 5.1)
+ * 2블록 구성: ① 고정 블록(사이트 경로) ② 트랙 트리
+ * 문서 내 목차는 여기 두지 않는다 (D7: 우측 패널 첫 탭)
+ *
+ * 데스크톱에서는 고정 컬럼, <1024px 에서는 드로어로 동작한다(layout.css).
+ */
+import { NAV } from '../../data/site';
+import { TRACKS } from '../../data/tracks';
+
+const pathname = Astro.url.pathname;
+const isCurrent = (href: string) =>
+  href === '/' ? pathname === '/' : pathname.startsWith(href);
+---
+
+<aside class="nav-panel" id="site-nav" aria-label="사이트 네비게이션">
+  <div class="nav-panel__inner">
+    <nav class="nav-section nav-fixed">
+      <p class="nav-heading">둘러보기</p>
+      <ul>
+        {
+          NAV.map((item) => (
+            <li>
+              {item.status === 'ready' ? (
+                <a
+                  class="nav-link"
+                  href={item.href}
+                  aria-current={isCurrent(item.href) ? 'page' : undefined}
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <span class="nav-link-disabled" aria-disabled="true" title="M5에서 추가 예정">
+                  {item.label}
+                  <span class="nav-badge">준비 중</span>
+                </span>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="nav-section nav-tree">
+      <p class="nav-heading" id="nav-track-heading">트랙</p>
+      {
+        TRACKS.length === 0 ? (
+          <p class="nav-empty" aria-labelledby="nav-track-heading">
+            아직 트랙이 없습니다.
+          </p>
+        ) : (
+          TRACKS.map((track) => (
+            <details class="nav-track" open>
+              <summary>{track.title}</summary>
+              <ul>
+                {/* M2에서 글 목록을 렌더한다 */}
+              </ul>
+            </details>
+          ))
+        )
+      }
+    </div>
+  </div>
+</aside>
+
+<style>
+  .nav-empty {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    padding-inline: var(--space-3);
+  }
+  .nav-badge {
+    margin-inline-start: auto;
+    font-size: 0.6875rem;
+    padding: 0.1em 0.4em;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    white-space: nowrap;
+  }
+</style>

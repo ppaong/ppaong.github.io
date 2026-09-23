@@ -8,9 +8,11 @@ interface Props {
   /** 페이지 제목. `<title>`에 " · 사이트명" 으로 붙는다 */
   title?: string;
   description?: string;
+  /** 3컬럼 앱 셸을 쓰는 페이지인가 (헤더의 패널 토글 노출 여부) */
+  shell?: boolean;
 }
 
-const { title, description = SITE.description } = Astro.props;
+const { title, description = SITE.description, shell = false } = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.title}` : `${SITE.title} — ${SITE.tagline}`;
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const year = new Date().getFullYear();
@@ -52,12 +54,12 @@ const year = new Date().getFullYear();
     </script>
   </head>
 
-  <body>
+  <body class={shell ? 'has-shell' : undefined}>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 
-    <SiteHeader />
+    <SiteHeader withToggles={shell} />
 
-    <main id="main" tabindex="-1">
+    <main id="main" tabindex="-1" class={shell ? 'main-shell' : undefined}>
       <slot />
     </main>
 
@@ -78,6 +80,9 @@ const year = new Date().getFullYear();
   main {
     flex: 1;
     padding-block: var(--space-7) var(--space-9);
+  }
+  main.main-shell {
+    padding-block: var(--space-6) var(--space-9);
   }
   main:focus {
     outline: none;

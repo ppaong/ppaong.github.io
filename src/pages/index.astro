@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import AppShell from '../layouts/AppShell.astro';
 import { SITE } from '../data/site';
 import { TRACKS } from '../data/tracks';
 
@@ -11,12 +12,12 @@ const statusLabel: Record<string, string> = {
 };
 ---
 
-<BaseLayout>
-  <div class="container">
+<BaseLayout shell>
+  <AppShell panelTitle="블로그 안내">
     <section class="hero">
       <p class="hero__eyebrow">{SITE.tagline}</p>
       <h1>{SITE.title}</h1>
-      <p class="prose">{SITE.description}</p>
+      <p class="hero__desc">{SITE.description}</p>
     </section>
 
     <section class="section" aria-labelledby="tracks-heading">
@@ -24,7 +25,7 @@ const statusLabel: Record<string, string> = {
 
       {
         TRACKS.length === 0 ? (
-          <p class="empty muted">
+          <p class="empty">
             아직 등록된 트랙이 없습니다. 첫 트랙과 샘플 글은 M2에서 추가됩니다.
           </p>
         ) : (
@@ -34,7 +35,7 @@ const statusLabel: Record<string, string> = {
                 <a href={`/blog/${track.id}/`}>
                   <span class="track-card__status">{statusLabel[track.status]}</span>
                   <h3>{track.title}</h3>
-                  <p class="muted">{track.summary}</p>
+                  <p>{track.summary}</p>
                   <span class="track-card__meta">난이도 {track.difficulty}/5</span>
                 </a>
               </li>
@@ -46,22 +47,28 @@ const statusLabel: Record<string, string> = {
 
     <section class="section" aria-labelledby="status-heading">
       <h2 id="status-heading">만드는 중</h2>
-      <p class="muted">
-        이 페이지는 M0(기반 세팅) 단계의 결과물입니다. 다음 순서로 채워집니다.
-      </p>
+      <p class="muted">이 페이지는 M1(레이아웃 골격) 단계의 결과물입니다.</p>
       <ol class="roadmap">
-        <li><b>M1</b> 3컬럼 레이아웃(좌측 네비 · 본문 · 우측 패널)과 다크 모드</li>
+        <li><b>M0</b> 기반 세팅 · 배포 파이프라인 — <span class="done">완료</span></li>
+        <li>
+          <b>M1</b> 3컬럼 레이아웃(좌측 네비 · 본문 · 우측 패널) — <span class="done">구현 완료</span>
+        </li>
         <li><b>M2</b> 콘텐츠 파이프라인(스키마 검증)과 샘플 글</li>
         <li><b>M3</b> 본문 페이지 + 우측 자료 패널</li>
         <li><b>M4</b> 목차 그래프 페이지</li>
-        <li><b>M5</b> 검색과 최근 글</li>
+        <li><b>M5</b> 검색(Pagefind)과 최근 글</li>
         <li><b>M6</b> 포트폴리오 · <b>M7</b> 마감</li>
       </ol>
       <p class="muted">
         계획 전문은 저장소의 <code>docs/PLAN.md</code> 참고.
       </p>
     </section>
-  </div>
+
+    <p slot="panel" class="panel-note">
+      좌측은 사이트·트랙 이동, 우측은 <b>본문과 함께 보는 보조 자료</b> 자리입니다.
+      상단의 <kbd>]</kbd> 또는 헤더 우측 버튼으로 열고 닫을 수 있습니다.
+    </p>
+  </AppShell>
 </BaseLayout>
 
 <style>
@@ -78,6 +85,11 @@ const statusLabel: Record<string, string> = {
     font-size: var(--text-4xl);
     line-height: var(--leading-tight);
     margin-block: var(--space-2) var(--space-4);
+  }
+  .hero__desc {
+    max-width: var(--layout-prose);
+    line-height: var(--leading-prose);
+    color: var(--color-text-muted);
   }
 
   .section {
@@ -98,6 +110,7 @@ const statusLabel: Record<string, string> = {
     border: 1px dashed var(--color-border-strong);
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
+    color: var(--color-text-muted);
   }
 
   .track-grid {
@@ -125,6 +138,10 @@ const statusLabel: Record<string, string> = {
     font-size: var(--text-lg);
     margin-block: var(--space-1) var(--space-2);
   }
+  .track-card p {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
   .track-card__status,
   .track-card__meta {
     font-size: var(--text-xs);
@@ -138,8 +155,32 @@ const statusLabel: Record<string, string> = {
   }
 
   .roadmap {
+    max-width: var(--layout-prose);
     padding-inline-start: var(--space-5);
     font-size: var(--text-sm);
     line-height: 2;
+    color: var(--color-text-muted);
+  }
+  .roadmap b {
+    color: var(--color-text);
+  }
+  .done {
+    color: var(--color-accent);
+  }
+  .doing {
+    color: var(--color-warn);
+  }
+
+  .panel-note {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    line-height: var(--leading-prose);
+  }
+  .panel-note kbd {
+    padding: 0.1em 0.4em;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    font-size: 0.9em;
   }
 </style>
