@@ -1,0 +1,115 @@
+/* =========================================================
+   인쇄 스타일 (PLAN 9.3-7 / panel-spec 5.5)
+   - 좌 네비·헤더·패널 크롬 제거, 본문 전폭
+   - 우측 패널의 보조 자료를 본문 뒤 **부록**으로 펼쳐 출력
+   - 수식·코드·표·그림이 페이지 경계에서 잘리지 않게 처리
+   ========================================================= */
+
+@media print {
+  /* ── 화면 전용 요소 제거 ─────────────────────────────── */
+  .site-header,
+  .site-footer,
+  .skip-link,
+  .nav-panel,
+  .panel-tabs,
+  .panel-resizer,
+  .panel-handle,
+  .sheet-grabber,
+  .scrim,
+  .lightbox,
+  .article__nav,
+  .material__back,
+  .group-filter,
+  .panel-empty,
+  .article__tags {
+    display: none !important;
+  }
+
+  /* ── 레이아웃을 단일 컬럼으로 ────────────────────────── */
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .app-shell {
+    display: block !important;
+    max-width: none !important;
+    padding-inline: 0 !important;
+  }
+  .main-col {
+    padding-inline: 0 !important;
+  }
+  .article__body,
+  .article__summary,
+  .article__header,
+  .article__nav {
+    max-width: none !important;
+  }
+
+  /* ── 보조 자료를 부록으로 출력 ───────────────────────── */
+  [data-panel-view='toc'] {
+    display: none !important;
+  }
+  [data-panel-view='materials'] {
+    display: block !important;
+  }
+  .article-panel {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    contain: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    break-before: page;
+  }
+  .article-panel__inner {
+    position: static !important;
+    min-width: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  .panel-body {
+    padding-block: 0 !important;
+  }
+  .materials-appendix-title {
+    display: block !important;
+    margin-block-end: 1rem;
+    padding-block-end: 0.5rem;
+    border-block-end: 1px solid #000;
+    font-size: 1.5rem;
+  }
+
+  /* ── 페이지 경계에서 잘리지 않게 ─────────────────────── */
+  .material,
+  .article__body .katex-display,
+  .article__body pre,
+  .article__body blockquote,
+  .article__body table,
+  .callout {
+    break-inside: avoid;
+  }
+  .article__body h2,
+  .article__body h3,
+  .material__header {
+    break-after: avoid;
+  }
+  img {
+    max-width: 100% !important;
+  }
+  .material__media img {
+    max-width: 60%;
+  }
+
+  /* ── 외부 링크 URL 각주 ──────────────────────────────── */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    color: #444;
+    word-break: break-all;
+  }
+}

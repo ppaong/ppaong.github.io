@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import AppShell from '../../../layouts/AppShell.astro';
 import MaterialPanel from '../../../components/materials/MaterialPanel.astro';
+import Lightbox from '../../../components/materials/Lightbox.astro';
 import Callout from '../../../components/blog/Callout.astro';
 import FigureRef from '../../../components/blog/FigureRef.astro';
 import { getTrack } from '../../../data/tracks';
@@ -40,7 +41,7 @@ const panelTitle = `${track?.title ?? trackId} · ${index + 1}/${siblings.length
 ---
 
 <BaseLayout shell title={post.data.title} description={post.data.summary}>
-  <AppShell panelTitle={panelTitle}>
+  <AppShell panelTitle={panelTitle} panelCount={post.data.materials.length}>
     <article class="article">
       <header class="article__header">
         <p class="article__breadcrumb">
@@ -102,4 +103,6 @@ const panelTitle = `${track?.title ?? trackId} · ${index + 1}/${siblings.length
 
     <MaterialPanel slot="panel" materials={post.data.materials} headings={headings} />
   </AppShell>
+
+  <Lightbox />
 </BaseLayout>

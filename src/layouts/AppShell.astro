@@ -1,12 +1,16 @@
 ---
 /**
- * 앱 셸 — 3컬럼 레이아웃과 상태 관리 (PLAN 6.4)
+ * 앱 셸 — 3컬럼 레이아웃과 상태 관리 (PLAN 6.4, panel-spec 5장)
  *
  * 상태(데스크톱): data-nav / data-panel  · 저장됨(localStorage)
  * 상태(모바일)  : data-drawer / data-sheet · 항상 닫힘으로 시작, 동시 열기 금지
  *
+ * 우 패널(M3):
+ *  · 드래그/키보드로 폭 조절 320~560px → --panel-current, 저장 키 panel.width
+ *  · 접히면 우측에 세로 탭(.panel-handle)으로 자료 존재를 알림
+ *  · 폭이 바뀌어도 읽던 위치를 유지(스크롤 앵커)
+ *
  * 키보드: [ = 좌 nav 토글, ] = 우 패널 토글, Esc = 오버레이 닫기
- * 모션 감소 설정에서는 CSS 토큰이 0ms가 되어 애니메이션이 사라진다.
  */
 import '../styles/layout.css';
 import SideNav from '../components/nav/SideNav.astro';
@@ -14,9 +18,11 @@ import SideNav from '../components/nav/SideNav.astro';
 interface Props {
   /** 우측 패널 제목 (M3에서 '문서 안내 / 자료' 탭으로 확장) */
   panelTitle?: string;
+  /** 세로 탭에 표시할 자료 개수. 0이면 탭을 숨긴다 */
+  panelCount?: number;
 }
 
-const { panelTitle = '보조 자료' } = Astro.props;
+const { panelTitle = '보조 자료', panelCount = 0 } = Astro.props;
 ---
 
 <div
@@ -35,8 +41,37 @@ const { panelTitle = '보조 자료' } = Astro.props;
 
   <aside class="article-panel" id="article-panel" aria-label={panelTitle}>
     <div class="article-panel__inner">
+      <button
+        type="button"
+        class="sheet-grabber"
+        data-sheet-grabber
+        aria-label="자료 패널 높이 조절 (위아래로 끌기)"
+      >
+      </button>
+
       <div class="panel-header">
         <span class="panel-header__title">{panelTitle}</span>
+        <button
+          type="button"
+          class="icon-button"
+          data-panel-reset
+          title="패널 폭 초기화"
+          aria-label="패널 폭 초기화"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+        </button>
         <button
           type="button"
           class="icon-button"
@@ -66,7 +101,35 @@ const { panelTitle = '보조 자료' } = Astro.props;
         </slot>
       </div>
     </div>
+
+    <button
+      type="button"
+      class="panel-resizer"
+      data-panel-resizer
+      role="separator"
+      aria-orientation="vertical"
+      aria-controls="article-panel"
+      aria-label="자료 패널 폭 조절"
+      aria-valuemin="320"
+      aria-valuemax="560"
+      aria-valuenow="380"
+      tabindex="0"
+    >
+    </button>
   </aside>
+
+  {
+    panelCount > 0 && (
+      <button
+        type="button"
+        class="panel-handle"
+        data-panel-toggle
+        aria-label={`보조 자료 ${panelCount}개 열기`}
+      >
+        자료 {panelCount}
+      </button>
+    )
+  }
 </div>
 
 <div class="scrim" data-scrim></div>
@@ -93,9 +156,21 @@ const { panelTitle = '보조 자료' } = Astro.props;
     const scrim = document.querySelector('[data-scrim]');
     const navToggles = document.querySelectorAll('[data-nav-toggle]');
     const panelToggles = document.querySelectorAll('[data-panel-toggle]');
+    const resizer = shell.querySelector('[data-panel-resizer]');
+    const resetBtn = shell.querySelector('[data-panel-reset]');
+    const grabber = shell.querySelector('[data-sheet-grabber]');
 
     const KEY_NAV = 'shell.nav';
     const KEY_PANEL = 'shell.panel';
+    const KEY_WIDTH = 'panel.width';
+
+    /** 리사이즈 가능 범위 (panel-spec 2.1) */
+    const MIN_W = 320;
+    const MAX_W = 560;
+    /** 컨테이너 대비 패널 최대 비율 */
+    const MAX_RATIO = 0.45;
+    /** 리사이즈 후 읽던 위치를 복원할 때 기준이 되는 상단 오프셋(px) */
+    const HEADER_OFFSET = 72;
 
     const read = (key: string, fallback: string): string => {
       try {
@@ -120,6 +195,47 @@ const { panelTitle = '보조 자료' } = Astro.props;
     const isDesktop = (): boolean => mqDesktop.matches;
     const navIsOpen = (): boolean => (isDesktop() ? navState === 'open' : overlay === 'drawer');
     const panelIsOpen = (): boolean => (isDesktop() ? panelState === 'open' : overlay === 'sheet');
+
+    // ── 패널 폭 ─────────────────────────────────────────
+    const defaultWidth = (): number => (window.innerWidth >= 1440 ? 380 : 320);
+    const maxAllowed = (): number =>
+      Math.max(MIN_W, Math.min(MAX_W, Math.round(shell.clientWidth * MAX_RATIO)));
+    const clampWidth = (value: number): number =>
+      Math.min(Math.max(Math.round(value), MIN_W), maxAllowed());
+
+    const storedWidth = Number.parseInt(read(KEY_WIDTH, ''), 10);
+    let panelWidth = Number.isFinite(storedWidth) ? clampWidth(storedWidth) : defaultWidth();
+
+    function applyWidth(width: number, persist: boolean): void {
+      shell.style.setProperty('--panel-current', `${width}px`);
+      if (resizer) {
+        resizer.setAttribute('aria-valuenow', String(width));
+        resizer.setAttribute('aria-valuemin', String(MIN_W));
+        resizer.setAttribute('aria-valuemax', String(maxAllowed()));
+        resizer.setAttribute('aria-valuetext', `${width}픽셀`);
+      }
+      if (persist) write(KEY_WIDTH, String(width));
+    }
+
+    // ── 스크롤 앵커 (폭이 바뀌어도 읽던 위치 유지) ──────
+    interface Anchor {
+      el: Element;
+      offset: number;
+    }
+    function captureAnchor(): Anchor | null {
+      const blocks = document.querySelectorAll('.article__body > *');
+      for (const el of blocks) {
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom > HEADER_OFFSET) return { el, offset: rect.top - HEADER_OFFSET };
+      }
+      return null;
+    }
+    function restoreAnchor(anchor: Anchor | null): void {
+      if (!anchor) return;
+      const rect = anchor.el.getBoundingClientRect();
+      const delta = rect.top - HEADER_OFFSET - anchor.offset;
+      if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+    }
 
     function syncA11y(): void {
       const navOpen = navIsOpen();
@@ -162,13 +278,17 @@ const { panelTitle = '보조 자료' } = Astro.props;
 
     function togglePanel(): void {
       if (isDesktop()) {
+        const anchor = captureAnchor();
         panelState = panelState === 'open' ? 'closed' : 'open';
         write(KEY_PANEL, panelState);
+        render();
+        // 접힘/펼침으로 본문 폭이 바뀌므로 읽던 위치를 되돌린다
+        requestAnimationFrame(() => restoreAnchor(anchor));
       } else {
         // 6.4: 좁은 화면에서는 좌우 동시 열기 금지
         overlay = overlay === 'sheet' ? null : 'sheet';
+        render();
       }
-      render();
     }
 
     navToggles.forEach((b) => b.addEventListener('click', toggleNav));
@@ -178,10 +298,113 @@ const { panelTitle = '보조 자료' } = Astro.props;
       render();
     });
 
+    // ── 리사이즈: 포인터 ────────────────────────────────
+    resizer?.addEventListener('pointerdown', (event) => {
+      const pe = event as PointerEvent;
+      if (!isDesktop() || !pe.isPrimary) return;
+      pe.preventDefault();
+
+      const startX = pe.clientX;
+      const startWidth = panelWidth;
+      const anchor = captureAnchor();
+      resizer.setPointerCapture(pe.pointerId);
+      resizer.setAttribute('data-state', 'dragging');
+
+      const onMove = (moveEvent: Event): void => {
+        const me = moveEvent as PointerEvent;
+        // 핸들을 왼쪽으로 끌면 패널이 넓어진다
+        panelWidth = clampWidth(startWidth - (me.clientX - startX));
+        applyWidth(panelWidth, false);
+      };
+      const onEnd = (): void => {
+        resizer.removeEventListener('pointermove', onMove);
+        resizer.removeEventListener('pointerup', onEnd);
+        resizer.removeEventListener('pointercancel', onEnd);
+        resizer.removeAttribute('data-state');
+        applyWidth(panelWidth, true);
+        restoreAnchor(anchor);
+      };
+
+      resizer.addEventListener('pointermove', onMove);
+      resizer.addEventListener('pointerup', onEnd);
+      resizer.addEventListener('pointercancel', onEnd);
+    });
+
+    // ── 리사이즈: 키보드 ────────────────────────────────
+    resizer?.addEventListener('keydown', (event) => {
+      const ke = event as KeyboardEvent;
+      const step = ke.shiftKey ? 64 : 16;
+      const anchor = captureAnchor();
+      let next: number | null = null;
+
+      if (ke.key === 'ArrowLeft') next = panelWidth + step;
+      else if (ke.key === 'ArrowRight') next = panelWidth - step;
+      else if (ke.key === 'Home') next = MIN_W;
+      else if (ke.key === 'End') next = maxAllowed();
+      else if (ke.key === 'Enter') {
+        ke.preventDefault();
+        togglePanel();
+        return;
+      }
+
+      if (next === null) return;
+      ke.preventDefault();
+      panelWidth = clampWidth(next);
+      applyWidth(panelWidth, true);
+      restoreAnchor(anchor);
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      const anchor = captureAnchor();
+      panelWidth = defaultWidth();
+      applyWidth(panelWidth, true);
+      restoreAnchor(anchor);
+    });
+
+    // ── 바텀 시트 높이 조절 (모바일) ─────────────────────
+    grabber?.addEventListener('pointerdown', (event) => {
+      const pe = event as PointerEvent;
+      if (isDesktop() || !pe.isPrimary) return;
+      pe.preventDefault();
+      const startY = pe.clientY;
+      const startHeight = panelEl?.getBoundingClientRect().height ?? 0;
+      const min = window.innerHeight * 0.25;
+      const max = window.innerHeight * 0.9;
+      grabber.setPointerCapture(pe.pointerId);
+
+      const onMove = (moveEvent: Event): void => {
+        const me = moveEvent as PointerEvent;
+        const height = Math.min(Math.max(startHeight + (startY - me.clientY), min), max);
+        shell.style.setProperty('--sheet-h', `${Math.round(height)}px`);
+      };
+      const onEnd = (): void => {
+        grabber.removeEventListener('pointermove', onMove);
+        grabber.removeEventListener('pointerup', onEnd);
+        grabber.removeEventListener('pointercancel', onEnd);
+      };
+
+      grabber.addEventListener('pointermove', onMove);
+      grabber.addEventListener('pointerup', onEnd);
+      grabber.addEventListener('pointercancel', onEnd);
+    });
+
+    // ── 창 크기 변경 시 폭 재계산 ───────────────────────
+    const onResize = (): void => {
+      if (!isDesktop()) return;
+      applyWidth(clampWidth(panelWidth), false);
+    };
+    window.addEventListener('resize', onResize);
+
     // 브레이크포인트를 넘어가면 오버레이는 닫는다
     mqDesktop.addEventListener('change', () => {
       overlay = null;
       render();
+      onResize();
+    });
+
+    // 다른 컴포넌트(예: 본문의 FigureRef)가 패널 열기를 요청할 때
+    document.addEventListener('open-panel', () => {
+      if (!panelIsOpen()) togglePanel();
     });
 
     document.addEventListener('keydown', (event) => {
@@ -206,11 +429,7 @@ const { panelTitle = '보조 자료' } = Astro.props;
       }
     });
 
-    // 다른 컴포넌트(예: 본문의 FigureRef)가 패널 열기를 요청할 때
-    document.addEventListener('open-panel', () => {
-      if (!panelIsOpen()) togglePanel();
-    });
-
+    applyWidth(panelWidth, false);
     render();
   }
 

@@ -56,6 +56,14 @@
 }
 .article-panel {
   grid-column: 3;
+  position: relative; /* 리사이즈 핸들의 기준 */
+}
+
+/* 1440px 미만에서는 기본 폭을 좁게 (panel-spec 2.1) */
+@media (min-width: 1024px) and (max-width: 1439.98px) {
+  .app-shell {
+    --layout-panel: 320px;
+  }
 }
 
 /* 폭이 0으로 접힐 때 내용 리플로우를 막기 위해 내부에 최소 폭을 준다 */
@@ -170,6 +178,111 @@
   }
   .app-shell[data-sheet='open'] .article-panel {
     transform: none;
+  }
+}
+
+/* =========================================================
+   우 패널 리사이즈 핸들 (M3 / panel-spec 5.1)
+   드래그 + 키보드로 320~560px 범위 조절. 초과분은 컨테이너의 45%로 클램프.
+   ========================================================= */
+.panel-resizer {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 3;
+  width: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+.panel-resizer::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 5px;
+  width: 2px;
+  background: transparent;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.panel-resizer:hover::before,
+.panel-resizer:focus-visible::before,
+.panel-resizer[data-state='dragging']::before {
+  background: var(--color-accent);
+}
+.panel-resizer:focus-visible {
+  outline: none;
+}
+.panel-resizer[data-state='dragging'] {
+  cursor: col-resize;
+}
+
+/* 접힌 상태에서 자료 존재를 알리는 세로 탭 (panel-spec 5.2) */
+.panel-handle {
+  position: fixed;
+  inset-inline-end: 0;
+  inset-block-start: 32vh;
+  z-index: var(--z-panel);
+  display: none;
+  align-items: center;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-inline-end: 0;
+  border-start-start-radius: var(--radius-md);
+  border-end-start-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: 1;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.05em;
+  box-shadow: var(--shadow-1);
+}
+.panel-handle:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+@media (min-width: 1024px) {
+  .app-shell[data-panel='closed'] .panel-handle {
+    display: inline-flex;
+  }
+}
+
+/* =========================================================
+   바텀 시트 높이 조절 (M3 / panel-spec 5.4)
+   ========================================================= */
+.sheet-grabber {
+  display: none;
+}
+@media (max-width: 767.98px) {
+  .sheet-grabber {
+    display: block;
+    width: 100%;
+    padding-block: var(--space-2) var(--space-3);
+    border: 0;
+    background: transparent;
+    cursor: grab;
+    touch-action: none;
+  }
+  .sheet-grabber::before {
+    content: '';
+    display: block;
+    width: 2.5rem;
+    height: 4px;
+    margin-inline: auto;
+    border-radius: var(--radius-full);
+    background: var(--color-border-strong);
+  }
+  .article-panel {
+    height: var(--sheet-h, 50vh);
+  }
+}
+
+/* 모바일에서는 리사이즈 핸들을 쓰지 않는다 */
+@media (max-width: 1023.98px) {
+  .panel-resizer {
+    display: none;
   }
 }
 

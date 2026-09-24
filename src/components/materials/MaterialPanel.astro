@@ -83,6 +83,9 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
         <p class="panel-empty">이 글에는 등록된 보조 자료가 없습니다.</p>
       ) : (
         <>
+          {/* 인쇄 시에만 보이는 부록 제목 (panel-spec 5.5) */}
+          <h2 class="materials-appendix-title">부록: 보조 자료</h2>
+
           {groups.length > 1 && (
             <div class="group-filter" role="group" aria-label="자료 그룹">
               {groups.map((g, i) => (
@@ -123,7 +126,14 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
 
               {
                 m.type === 'image' && m.src && (
-                  <a class="material__media" href={m.src} target="_blank" rel="noreferrer">
+                  <button
+                    type="button"
+                    class="material__media"
+                    data-lightbox-src={m.src}
+                    data-lightbox-alt={m.alt ?? ''}
+                    data-lightbox-caption={m.caption ?? ''}
+                    aria-label={`${m.title} 확대 보기`}
+                  >
                     <img
                       src={m.src}
                       alt={m.alt ?? ''}
@@ -132,7 +142,7 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
                       loading="lazy"
                       decoding="async"
                     />
-                  </a>
+                  </button>
                 )
               }
 
@@ -212,8 +222,29 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
         root.querySelectorAll<HTMLElement>('[data-material-group]').forEach((item) => {
           item.hidden = group !== 'all' && item.dataset.materialGroup !== group;
         });
+        try {
+          localStorage.setItem('panel.group', group ?? 'all');
+        } catch {
+          /* 무시 */
+        }
       });
     });
+
+    // 저장된 그룹 필터 복원
+    try {
+      const savedGroup = localStorage.getItem('panel.group');
+      const chip = chips.find((c) => c.dataset.groupFilter === savedGroup);
+      if (chip) {
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+        root.querySelectorAll<HTMLElement>('[data-material-group]').forEach((item) => {
+          item.hidden =
+            chip.dataset.groupFilter !== 'all' &&
+            item.dataset.materialGroup !== chip.dataset.groupFilter;
+        });
+      }
+    } catch {
+      /* 무시 */
+    }
 
     // 본문 → 패널
     document.querySelectorAll<HTMLElement>('[data-material-ref]').forEach((ref) => {

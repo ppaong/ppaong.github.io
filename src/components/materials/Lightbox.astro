@@ -1,0 +1,162 @@
+---
+/**
+ * 자료 이미지 라이트박스 (panel-spec 5.3)
+ *
+ * 우측 패널은 overflow:hidden 이므로 오버레이는 문서 최상위에 둔다.
+ * `[data-lightbox-src]` 요소(자료 카드의 이미지)를 클릭하면 열린다.
+ */
+---
+
+<div
+  class="lightbox"
+  id="lightbox"
+  role="dialog"
+  aria-modal="true"
+  aria-label="자료 이미지 확대"
+  hidden
+>
+  <div class="lightbox__backdrop" data-lb-close></div>
+
+  <figure class="lightbox__stage">
+    <img class="lightbox__img" alt="" width="1600" height="1200" />
+    <figcaption class="lightbox__caption" hidden></figcaption>
+  </figure>
+
+  <div class="lightbox__bar">
+    <span class="lightbox__counter" aria-live="polite"></span>
+    <button type="button" class="lightbox__btn" data-lb-prev aria-label="이전 이미지">←</button>
+    <button type="button" class="lightbox__btn" data-lb-next aria-label="다음 이미지">→</button>
+    <a class="lightbox__btn" data-lb-orig target="_blank" rel="noreferrer">원본 보기</a>
+    <a class="lightbox__btn" data-lb-download>다운로드</a>
+    <button type="button" class="lightbox__btn" data-lb-close aria-label="닫기">✕</button>
+  </div>
+</div>
+
+<script>
+  function initLightbox(): void {
+    const box = document.getElementById('lightbox');
+    if (!box) return;
+
+    const img = box.querySelector<HTMLImageElement>('.lightbox__img');
+    const caption = box.querySelector<HTMLElement>('.lightbox__caption');
+    const counter = box.querySelector<HTMLElement>('.lightbox__counter');
+    const fromIcon = box.querySelector<HTMLAnchorElement>('[data-lb-orig]');
+    const downloadLink = box.querySelector<HTMLAnchorElement>('[data-lb-download]');
+    const nextBtn = box.querySelector<HTMLElement>('[data-lb-next]');
+
+    let index = 0;
+    let lastFocused: HTMLElement | null = null;
+
+    const triggers = (): HTMLElement[] =>
+      Array.from(document.querySelectorAll<HTMLElement>('[data-lightbox-src]'));
+
+    function focusables(): HTMLElement[] {
+      return Array.from(
+        box!.querySelectorAll<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => !el.hasAttribute('hidden'));
+    }
+
+    function show(target: number): void {
+      const list = triggers();
+      if (list.length === 0) return;
+      index = (target + list.length) % list.length;
+
+      const source = list[index];
+      if (!source) return;
+      const src = source.getAttribute('data-lightbox-src') ?? '';
+      const alt = source.getAttribute('data-lightbox-alt') ?? '';
+      const cap = source.getAttribute('data-lightbox-caption') ?? '';
+
+      if (img) {
+        img.src = src;
+        img.alt = alt;
+      }
+      if (caption) {
+        caption.textContent = cap;
+        caption.hidden = cap === '';
+      }
+      if (counter) counter.textContent = `${index + 1} / ${list.length}`;
+      if (fromIcon) fromIcon.href = src;
+      if (downloadLink) {
+        downloadLink.href = src;
+        downloadLink.setAttribute('download', src.split('/').pop() ?? 'image');
+      }
+    }
+
+    function open(target: number, opener: HTMLElement): void {
+      lastFocused = opener;
+      show(target);
+      box!.hidden = false;
+      document.body.classList.add('has-lightbox');
+      nextBtn?.focus();
+    }
+
+    function close(): void {
+      box!.hidden = true;
+      document.body.classList.remove('has-lightbox');
+      if (img) img.removeAttribute('src');
+      lastFocused?.focus();
+    }
+
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      if (target.closest('[data-lb-close]')) {
+        close();
+        return;
+      }
+      const opener = target.closest<HTMLElement>('[data-lightbox-src]');
+      if (opener) {
+        event.preventDefault();
+        open(triggers().indexOf(opener), opener);
+        return;
+      }
+      if (target.closest('[data-lb-prev]')) {
+        show(index - 1);
+        return;
+      }
+      if (target.closest('[data-lb-next]')) {
+        show(index + 1);
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (box.hidden) return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        show(index - 1);
+        return;
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        show(index + 1);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      // 포커스 트랩
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    });
+  }
+
+  initLightbox();
+</script>

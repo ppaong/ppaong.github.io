@@ -515,7 +515,8 @@ ppaong.github.io/
 ├─ scripts/                      # validate-content.ts, new-post.ts, build-graph.ts
 ├─ docs/
 │  ├─ PLAN.md                    # 본 문서 (기획 + 의사결정)
-│  ├─ authoring.md               # 글 작성 가이드 (발행 전 체크리스트)
+│  ├─ authoring.md               # 글 작성 가이드 (필드·문법)
+│  ├─ upload-guide.md            # 업로드 전체 절차 (raw, 도구 없이)
 │  ├─ studio-plan.md             # 작성 도구(스튜디오) 확장 계획
 │  ├─ graph-spec.md              # (M4 착수 전 작성)
 │  ├─ design/
@@ -639,7 +640,7 @@ ppaong.github.io/
 | M6 | 포트폴리오 (`/portfolio/`) | 스크롤 섹션, 연출, reduced-motion 대응, 이력서/연락 | reduced-motion에서 정적 열람 가능, LCP 이미지 1장 |
 | M7 | 마감 | SEO/OG/사이트맵, **분석(Umami) 연결**, Lighthouse, 접근성 감사, 404, print, `authoring.md` | Lighthouse 목표 달성, 접근성 이슈 0(치명) |
 
-> **진행 상태**: M0 ✅ · M1 ✅ (시각 검증 대기) · M2 ✅ · **M3 착수 준비 완료** — 남은 작업은 `docs/design/panel-spec.md` 5장 체크리스트
+> **진행 상태**: M0 ✅ · M1 ✅ · M2 ✅ · **M3 🔶 대부분 완료** — 패널 폭 조절·라이트박스·스크롤 앵커·인쇄 완료, 남은 것: 모바일 포커스 트랩·바텀시트 스냅(`panel-spec` 5.4) + 육안 검증
 > 의존관계: M4는 M2(데이터 모델) 완료 후 착수. M3의 우 패널은 M2의 `materials` 스키마에 의존.
 > **확장 계획**: 글 작성기(스튜디오)는 **별도 private 저장소**에서, **블로그 개발 완료 후** 착수한다 → `docs/studio-plan.md` · `docs/adr/0002`. 두 저장소는 코드를 공유하지 않고 **CLI 계약**(`npm run validate:json`, `contractVersion`)으로 연결한다. 이 계약은 **현재 구현 완료**.
 > 스튜디오를 염두에 둔 작업 원칙: ① 데이터는 코드(TS)가 아니라 JSON에 둔다 ② 검증은 이 CLI 한 경로로만 노출한다 ③ 계약 형식을 바꾸면 버전을 올린다 ④ 경로 규약(`src/content/blog/<track>/<slug>.mdx`, `public/blog/<track>/`)을 유지한다 ⑤ `.github/workflows/**`는 도구가 만질 수 없다.

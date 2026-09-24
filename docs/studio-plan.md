@@ -23,11 +23,18 @@
 
 ## 2. 배치 결정 — 별도 저장소
 
-**별도 private 저장소에서 개발한다.** (예: `ppaong/blog-studio`)
+**별도 private 저장소에서 개발한다.**
+
+| 항목 | 확정 값 |
+|---|---|
+| 저장소 | **`ppaong/ppaong.writer`** (private, 생성 완료) |
+| 로컬 경로 | **`~/Documents/ppaong.writer`** (맥) |
+| 인증 | fine-grained PAT — 해당 저장소가 토큰 범위에 추가됨, push 권한 확인 완료 |
+| 착수 시점 | **블로그(ppaong.github.io) M3~M7 완료 후** |
 
 - 블로그 저장소(`ppaong.github.io`)는 **공개 사이트**이고, 스튜디오는 개인 도구다. 관심사·배포 파이프라인·의존성이 완전히 다르다.
 - 블로그의 배포(Actions → Pages)에 도구 코드가 섞이지 않는다.
-- 스튜디오는 이 저장소가 **완성된 뒤** 착수한다(현재 블로그는 M3~M7이 남아 있다).
+- 현재 `ppaong.writer`에는 README와 `.gitignore`만 있는 **착수 대기 상태**다.
 
 ### 2.1 별도 저장소의 유일한 대가 — 데이터 모델 공유
 
