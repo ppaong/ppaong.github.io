@@ -511,20 +511,21 @@ ppaong.github.io/
 ├─ astro.config.mjs
 ├─ package.json  tsconfig.json  .nvmrc
 ├─ public/                       # favicon, og 이미지, robots.txt
-├─ scripts/                      # new-post.mjs, validate-content.mjs, build-graph.mjs
+├─ scripts/                      # validate-content.ts, new-post.ts, build-graph.ts
 ├─ docs/
 │  ├─ PLAN.md                    # 본 문서 (기획 + 의사결정)
-│  ├─ authoring.md               # 저작 가이드 (발행 전 체크리스트)
+│  ├─ authoring.md               # 글 작성 가이드 (발행 전 체크리스트)
+│  ├─ studio-plan.md             # 작성 도구(스튜디오) 확장 계획
+│  ├─ graph-spec.md              # (M4 착수 전 작성)
 │  ├─ design/
 │  │  ├─ panel-spec.md           # 우측 패널 상세 스펙 (M3)
 │  │  └─ search-spec.md          # 검색 상세 스펙 (M5)
-│  ├─ graph-spec.md              # (M4 착수 전 작성)
 │  ├─ adr/                       # 결정 기록 (D1~Dn)
 │  └─ reference/                 # 외부 참고자료 (codetree/ 는 gitignore)
 └─ src/
-   ├─ content.config.ts          # 컬렉션 + Zod 스키마
+   ├─ content.config.ts          # 컬렉션 + Zod 스키마 (M4/A0에서 lib로 추출)
    ├─ content/
-   │  ├─ blog/<track>/<order>-<slug>.mdx
+   │  ├─ blog/<track>/<slug>.mdx
    │  └─ portfolio/*.mdx
    ├─ data/
    │  ├─ site.ts                 # 사이트 메타, 소셜
@@ -639,6 +640,7 @@ ppaong.github.io/
 
 > **진행 상태**: M0 ✅ · M1 ✅ (시각 검증 대기) · **M2 ✅ 완료** — 다음은 M3(본문 페이지 완성 + 우측 패널 상세)
 > 의존관계: M4는 M2(데이터 모델) 완료 후 착수. M3의 우 패널은 M2의 `materials` 스키마에 의존.
+> **확장 계획**: 글 작성용 스튜디오(웹 어드민)는 **`docs/studio-plan.md`**. 그 안의 **A0(선행 리팩터 5종: tracks/overrides JSON화, 스키마·검증 공용화, content index 생성)는 M4의 그래프 파이프라인과 작업이 겹치므로 M4 착수 직전에 배치**하는 것을 권장한다(중복 작업 0).
 
 ---
 
