@@ -12,6 +12,7 @@
     "preview": "astro preview",
     "check": "astro check && node scripts/validate-content.ts",
     "validate": "node scripts/validate-content.ts",
+    "validate:json": "node scripts/validate-content.ts --json",
     "astro": "astro"
   },
   "dependencies": {

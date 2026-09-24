@@ -253,11 +253,57 @@ for (const e of entries) {
 const errors = issues.filter((i) => i.level === 'error');
 const warns = issues.filter((i) => i.level === 'warn');
 
-console.log(`\n콘텐츠 검증: 글 ${entries.length}편 / 트랙 ${byTrack.size}개\n`);
-for (const i of [...errors, ...warns]) {
-  const mark = i.level === 'error' ? '✗' : '△';
-  console.log(`${mark} [${i.rule}] ${i.file}\n    ${i.message}`);
-}
-console.log(`\n결과: 오류 ${errors.length} · 경고 ${warns.length}\n`);
+/**
+ * 외부 도구(로컬 글 작성기)와 CI 가 기계적으로 읽는 인터페이스.
+ * 이 형식은 **계약**이다 — 필드를 바꾸면 CONTRACT_VERSION 을 올린다.
+ * docs/studio-plan.md 의 "코어 계약" 참고.
+ */
+const CONTRACT_VERSION = 1;
 
-if (errors.length > 0) process.exit(1);
+if (process.argv.includes('--json')) {
+  const payload = {
+    contractVersion: CONTRACT_VERSION,
+    ok: errors.length === 0,
+    summary: {
+      posts: entries.length,
+      tracks: byTrack.size,
+      errors: errors.length,
+      warnings: warns.length,
+    },
+    issues: issues.map((i) => ({
+      level: i.level,
+      rule: i.rule,
+      file: i.file,
+      message: i.message,
+    })),
+    // 글 인덱스 — 작성기가 목록/트리를 그리는 데 쓴다
+    posts: entries.map((e) => ({
+      id: `${e.track}/${e.slug}`,
+      track: e.track,
+      slug: e.slug,
+      url: e.url,
+      title: e.data.title,
+      order: e.data.order,
+      status: e.data.status,
+      difficulty: e.data.difficulty ?? null,
+      tags: e.data.tags ?? [],
+      materialCount: Array.isArray(e.data.materials) ? e.data.materials.length : 0,
+      updated: e.data.updated ?? e.data.created ?? null,
+    })),
+    tracks: [...byTrack.keys()].map((id) => ({
+      id,
+      postCount: (byTrack.get(id) ?? []).length,
+    })),
+  };
+  console.log(JSON.stringify(payload, null, 2));
+  if (errors.length > 0) process.exit(1);
+} else {
+  console.log(`\n콘텐츠 검증: 글 ${entries.length}편 / 트랙 ${byTrack.size}개\n`);
+  for (const i of [...errors, ...warns]) {
+    const mark = i.level === 'error' ? '✗' : '△';
+    console.log(`${mark} [${i.rule}] ${i.file}\n    ${i.message}`);
+  }
+  console.log(`\n결과: 오류 ${errors.length} · 경고 ${warns.length}\n`);
+
+  if (errors.length > 0) process.exit(1);
+}
