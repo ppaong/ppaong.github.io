@@ -85,6 +85,14 @@
   }
 
   /* ── 페이지 경계에서 잘리지 않게 ─────────────────────── */
+  [data-materials-list][data-aligned='true'] {
+    position: static !important;
+    height: auto !important;
+  }
+  [data-materials-list][data-aligned='true'] .material {
+    position: static !important;
+    top: auto !important;
+  }
   .material,
   .article__body .katex-display,
   .article__body pre,

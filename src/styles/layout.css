@@ -286,8 +286,24 @@
   }
 }
 
-/* ── 스크림(오버레이 배경) ─────────────────────────────── */
-.scrim {
+/* =========================================================
+   자료 ↔ 본문 참조 정렬 (패널이 상시 표시될 때만 / panel-spec 5.7)
+   JS가 --material-top 과 --list-h 를 계산해 넣는다.
+   오버레이(<1024px)에서는 data-aligned 가 붙지 않아 기존 흐름 그대로다.
+   ========================================================= */
+@media (min-width: 1024px) {
+  [data-materials-list][data-aligned='true'] {
+    position: relative;
+    height: var(--list-h, auto);
+  }
+  [data-materials-list][data-aligned='true'] .material {
+    position: absolute;
+    inset-inline: 0;
+    top: var(--material-top, 0px);
+  }
+}
+
+/* ── 스크림(오버레이 배경) ─────────────────────────────── */.scrim {
   position: fixed;
   inset: 0;
   z-index: calc(var(--z-drawer) - 1);
