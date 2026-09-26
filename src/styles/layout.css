@@ -24,7 +24,8 @@
 
   display: grid;
   grid-template-columns: var(--nav-w) minmax(0, 1fr) var(--panel-w);
-  align-items: start;
+  /* align-items: stretch (기본값) 이어야 한다.
+     각 칼럼이 행 높이(≈본문 높이)만큼 늘어나야 내부 sticky 가 페이지 끝까지 따라온다. */
   column-gap: 0;
   width: 100%;
   max-width: 96rem;
@@ -43,7 +44,9 @@
 /* ── 컬럼 ─────────────────────────────────────────────── */
 .nav-panel,
 .article-panel {
-  overflow: hidden;
+  /* overflow: hidden 은 스크롤 컨테이너를 만들어 내부 position: sticky 를 무력화한다.
+     overflow: clip 은 스크롤 컨테이너를 만들지 않으므로 클리핑과 sticky 를 동시에 만족한다. */
+  overflow: clip;
   transition: visibility var(--duration-base) var(--ease-out);
 }
 .nav-panel {
@@ -92,10 +95,8 @@
     overscroll-behavior: contain;
     padding-block-end: var(--space-6);
   }
-  .nav-panel,
-  .article-panel {
-    contain: layout;
-  }
+  /* 패널 내부 스크롤을 본문과 격리한다 (overflow-y: auto 로 충분.
+     contain: layout 은 스크롤 격리에 필수가 아니고 sticky 와의 상호작용 위험을 피하려 제외) */
   .scrim {
     display: none;
   }
