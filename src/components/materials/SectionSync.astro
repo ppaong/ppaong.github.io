@@ -1,0 +1,175 @@
+---
+/**
+ * 본문 섹션 ↔ 우측 패널 연동 (방식 B: 활성 섹션 추적형)
+ *
+ * · 본문의 `.section-marker` 를 순서대로 읽어 "활성 섹션"을 판정한다
+ * · 활성 섹션에 연결된 자료만 패널에 보여준다(따라오기 모드)
+ * · 빈 섹션/없는 id 면 이전 자료를 유지하고 배지를 띄운다
+ * · 본문 마커 ↔ 패널 카드 양방향 강조
+ *
+ * 마커가 없는 글은 기존 동작(전체 목록)으로 폴백한다.
+ * 설계: docs/design/section-spec.md
+ */
+---
+
+<script>
+  function initSectionSync(): void {
+    const body = document.querySelector('.article__body');
+    const panelRoot = document.getElementById('material-panel');
+    const materialsView = document.querySelector('[data-panel-view="materials"]');
+    if (!body || !panelRoot || !materialsView) return;
+
+    const markers = Array.from(body.querySelectorAll<HTMLElement>('.section-marker'));
+    const modeToggle = document.querySelector<HTMLElement>('.panel-mode');
+    const emptyBadge = document.querySelector<HTMLElement>('[data-section-empty]');
+    const KEY_MODE = 'panel.mode';
+
+    const read = (key: string, fallback: string): string => {
+      try {
+        return localStorage.getItem(key) ?? fallback;
+      } catch {
+        return fallback;
+      }
+    };
+    const write = (key: string, value: string): void => {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        /* 무시 */
+      }
+    };
+
+    const idOf = (marker: HTMLElement): string => marker.getAttribute('data-section-id') ?? '';
+    const isKnown = (marker: HTMLElement): boolean =>
+      marker.getAttribute('data-material-known') === 'true' &&
+      marker.getAttribute('data-section-id') !== '';
+    const cardOf = (id: string): HTMLElement | null =>
+      document.getElementById(`material-${CSS.escape(id)}`);
+
+    let mode: 'follow' | 'list' = read(KEY_MODE, 'follow') === 'list' ? 'list' : 'follow';
+    let lastKey = '';
+
+    // ── 마커가 없는 글: 전체 목록 고정 ───────────────────
+    if (markers.length === 0) {
+      modeToggle?.setAttribute('hidden', '');
+      panelRoot.dataset.panelMode = 'list';
+      bindHover();
+      return;
+    }
+
+    function clearActive(): void {
+      panelRoot?.querySelectorAll('.material.is-active').forEach((el) => el.classList.remove('is-active'));
+      if (emptyBadge) emptyBadge.hidden = true;
+    }
+
+    /** 활성 섹션 기준으로 보여줄 카드와 "자료 없음" 여부를 결정한다 */
+    function resolve(index: number): { card: HTMLElement | null; isEmpty: boolean } {
+      for (let i = index; i >= 0; i -= 1) {
+        const marker = markers[i];
+        if (!marker || !isKnown(marker)) continue;
+        const card = cardOf(idOf(marker));
+        if (card) return { card, isEmpty: i !== index };
+      }
+      return { card: null, isEmpty: true };
+    }
+
+    /** 읽는 기준선(뷰포트 상단 + 25%)보다 위에 있는 마지막 마커 */
+    function activeIndex(): number {
+      const line = window.innerHeight * 0.25;
+      let active = 0;
+      for (let i = 0; i < markers.length; i += 1) {
+        const marker = markers[i];
+        if (!marker) continue;
+        if (marker.getBoundingClientRect().top <= line) active = i;
+        else break;
+      }
+      return active;
+    }
+
+    function update(force = false): void {
+      if (mode !== 'follow') return;
+      const index = activeIndex();
+      const { card, isEmpty } = resolve(index);
+      const key = `${index}:${card?.id ?? ''}`;
+      if (!force && key === lastKey) return;
+      lastKey = key;
+
+      panelRoot?.querySelectorAll('.material.is-active').forEach((el) => el.classList.remove('is-active'));
+      card?.classList.add('is-active');
+      if (emptyBadge) emptyBadge.hidden = !isEmpty;
+    }
+
+    function applyMode(): void {
+      if (panelRoot) panelRoot.dataset.panelMode = mode;
+      modeToggle?.querySelectorAll<HTMLElement>('[data-mode-set]').forEach((btn) => {
+        btn.setAttribute('aria-pressed', String(btn.dataset.modeSet === mode));
+      });
+      if (mode === 'follow') {
+        lastKey = '';
+        update(true);
+      } else {
+        clearActive();
+      }
+    }
+
+    modeToggle?.querySelectorAll<HTMLElement>('[data-mode-set]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        mode = btn.dataset.modeSet === 'list' ? 'list' : 'follow';
+        write(KEY_MODE, mode);
+        applyMode();
+      });
+    });
+
+    // ── 본문 ↔ 패널 양방향 강조 ─────────────────────────
+    function bindHover(): void {
+      markers.forEach((marker) => {
+        if (!isKnown(marker)) return;
+        const card = cardOf(idOf(marker));
+        if (!card) return;
+        marker.addEventListener('mouseenter', () => card.classList.add('is-linked'));
+        marker.addEventListener('mouseleave', () => card.classList.remove('is-linked'));
+        card.addEventListener('mouseenter', () => marker.classList.add('is-linked'));
+        card.addEventListener('mouseleave', () => marker.classList.remove('is-linked'));
+        // 마커 클릭 → 해당 자료를 패널에서 열기
+        marker.addEventListener('click', () => {
+          document.dispatchEvent(new CustomEvent('open-panel'));
+          if (mode !== 'follow') {
+            card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        });
+      });
+    }
+
+    // ── 스크롤 추적 (rAF 스로틀) ─────────────────────────
+    let frame = 0;
+    const onScroll = (): void => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        update();
+      });
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => {
+      lastKey = '';
+      update(true);
+    });
+    document.addEventListener('panel-tab-changed', () => {
+      lastKey = '';
+      update(true);
+    });
+
+    // 패널 탭이 '자료'일 때만 의미가 있지만, 계산 자체는 가볍다
+    bindHover();
+    applyMode();
+
+    // 폰트 로드 후 위치가 바뀌므로 재계산
+    void document.fonts?.ready.then(() => {
+      lastKey = '';
+      update(true);
+    });
+  }
+
+  initSectionSync();
+</script>

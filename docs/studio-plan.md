@@ -61,7 +61,7 @@
 
 ```jsonc
 {
-  "contractVersion": 1,          // 계약이 바뀌면 증가. 스튜디오가 확인 후 경고
+  "contractVersion": 2,          // 계약이 바뀌면 증가. 스튜디오가 확인 후 경고
   "ok": true,                    // 오류 0 여부
   "summary": { "posts": 3, "tracks": 1, "errors": 0, "warnings": 0 },
   "issues": [
@@ -79,6 +79,13 @@
       "difficulty": 1,
       "tags": ["집합", "기호", "기초"],
       "materialCount": 3,
+      "sectionCount": 4,
+      "sections": [
+        { "index": 1, "materialId": "fig-venn" },
+        { "index": 2, "materialId": "note-symbols" },
+        { "index": 3, "materialId": null },          // 빈 섹션
+        { "index": 4, "materialId": "ref-wikipedia" }
+      ],
       "updated": "2026-09-23"
     }
   ],

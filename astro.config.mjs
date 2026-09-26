@@ -5,15 +5,17 @@ import sitemap from '@astrojs/sitemap';
 import { unified } from '@astrojs/markdown-remark';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import remarkDirective from 'remark-directive';
+import remarkSectionDirective from './src/lib/remark-section-directive.ts';
 
 /**
  * Markdown 프로세서 (Astro 7)
- * 기본값은 Rust 기반 Sätteri지만, remark/rehype 생태계(KaTeX)를 쓰기 위해
+ * 기본값은 Rust 기반 Sätteri지만, remark/rehype 생태계를 쓰기 위해
  * Unified 프로세서를 명시적으로 선택한다.
  * 참고: Astro 7에서 `markdown.remarkPlugins` 직접 지정은 deprecated.
  */
 const processor = unified({
-  remarkPlugins: [remarkMath],
+  remarkPlugins: [remarkMath, remarkDirective, remarkSectionDirective],
   rehypePlugins: [rehypeKatex],
 });
 

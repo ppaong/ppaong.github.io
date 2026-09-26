@@ -86,6 +86,20 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
           {/* 인쇄 시에만 보이는 부록 제목 (panel-spec 5.5) */}
           <h2 class="materials-appendix-title">부록: 보조 자료</h2>
 
+          {/* 표시 방식: 따라오기(기본) / 전체 목록 — 마커가 없으면 JS가 숨긴다 */}
+          <div class="panel-mode" role="group" aria-label="자료 표시 방식">
+            <button type="button" class="panel-mode__btn" data-mode-set="follow" aria-pressed="true">
+              따라오기
+            </button>
+            <button type="button" class="panel-mode__btn" data-mode-set="list" aria-pressed="false">
+              전체 목록
+            </button>
+          </div>
+
+          <p class="section-empty-badge" data-section-empty hidden>
+            이 구간에 연결된 자료가 없습니다
+          </p>
+
           {groups.length > 1 && (
             <div class="group-filter" role="group" aria-label="자료 그룹">
               {groups.map((g, i) => (
@@ -192,6 +206,7 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
       } catch {
         /* 무시 */
       }
+      document.dispatchEvent(new CustomEvent('panel-tab-changed'));
     }
 
     tabs.forEach((tab, i) => {

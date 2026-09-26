@@ -52,6 +52,14 @@
   [data-panel-view='materials'] {
     display: block !important;
   }
+  /* 표시 방식과 무관하게 자료는 전부 1회씩 출력한다 (section-spec 4.2) */
+  #material-panel .panel-mode,
+  #material-panel .section-empty-badge {
+    display: none !important;
+  }
+  #material-panel[data-panel-mode] .material {
+    display: block !important;
+  }
   .article-panel {
     position: static !important;
     display: block !important;

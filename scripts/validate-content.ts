@@ -45,6 +45,8 @@ interface Entry {
   slug: string;
   url: string;
   data: Record<string, unknown>;
+  /** `::section[...]` 로 선언된 섹션(자료 id) 목록. 빈 문자열은 빈 섹션 */
+  sections: string[];
 }
 
 function walk(dir: string): string[] {
@@ -115,9 +117,11 @@ for (const file of files) {
   });
 
   // R9-b — 본문의 <FigureRef> 가 가리키는 자료가 실존하고, 번호가 순서와 맞는가
+  const refIds = new Set<string>();
   for (const match of source.matchAll(/<FigureRef\s+id="([^"]+)"(?:\s+n=\{(\d+)\})?/g)) {
     const refId = match[1] ?? '';
     const refN = match[2];
+    refIds.add(refId);
     const idx = materials.findIndex((m) => String(m.id) === refId);
     if (idx === -1) {
       add('error', 'R9', rel, `<FigureRef id="${refId}"> 가 가리키는 자료가 materials 에 없습니다.`);
@@ -133,7 +137,30 @@ for (const file of files) {
     }
   }
 
-  entries.push({ file, rel, track, slug, url: `/blog/${track}/${slug}/`, data });
+  // R16 — `::section[...]` 디렉티브가 가리키는 자료가 있는가
+  const sectionIds: string[] = [];
+  for (const match of source.matchAll(/^:{0,3}section\[([^\]]*)\]/gm)) {
+    const raw = (match[1] ?? '').trim().replace(/^#/, '');
+    sectionIds.push(raw);
+    if (raw && !materials.some((m) => String(m.id) === raw)) {
+      add(
+        'warn',
+        'R16',
+        rel,
+        `::section[${raw}] 가 가리키는 자료가 materials 에 없습니다 (빈 섹션으로 처리됩니다).`,
+      );
+    }
+  }
+
+  // R17 — 한 번도 호출되지 않은 자료 (섹션·FigureRef 어디에서도)
+  for (const material of materials) {
+    const mid = String(material.id ?? '');
+    if (mid && !sectionIds.includes(mid) && !refIds.has(mid)) {
+      add('warn', 'R17', rel, `자료 '${mid}' 가 본문에서 호출되지 않았습니다 (인쇄 부록에는 포함).`);
+    }
+  }
+
+  entries.push({ file, rel, track, slug, url: `/blog/${track}/${slug}/`, data, sections: sectionIds });
 }
 
 // ── R2 중복 ─────────────────────────────────────────────
@@ -258,7 +285,7 @@ const warns = issues.filter((i) => i.level === 'warn');
  * 이 형식은 **계약**이다 — 필드를 바꾸면 CONTRACT_VERSION 을 올린다.
  * docs/studio-plan.md 의 "코어 계약" 참고.
  */
-const CONTRACT_VERSION = 1;
+const CONTRACT_VERSION = 2;
 
 if (process.argv.includes('--json')) {
   const payload = {
@@ -288,6 +315,8 @@ if (process.argv.includes('--json')) {
       difficulty: e.data.difficulty ?? null,
       tags: e.data.tags ?? [],
       materialCount: Array.isArray(e.data.materials) ? e.data.materials.length : 0,
+      sectionCount: e.sections.length,
+      sections: e.sections.map((materialId, i) => ({ index: i + 1, materialId: materialId || null })),
       updated: e.data.updated ?? e.data.created ?? null,
     })),
     tracks: [...byTrack.keys()].map((id) => ({

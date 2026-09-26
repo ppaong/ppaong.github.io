@@ -4,6 +4,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import AppShell from '../../../layouts/AppShell.astro';
 import MaterialPanel from '../../../components/materials/MaterialPanel.astro';
 import Lightbox from '../../../components/materials/Lightbox.astro';
+import SectionSync from '../../../components/materials/SectionSync.astro';
 import Callout from '../../../components/blog/Callout.astro';
 import FigureRef from '../../../components/blog/FigureRef.astro';
 import { getTrack } from '../../../data/tracks';
@@ -105,4 +106,5 @@ const panelTitle = `${track?.title ?? trackId} · ${index + 1}/${siblings.length
   </AppShell>
 
   <Lightbox />
+  <SectionSync />
 </BaseLayout>

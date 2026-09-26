@@ -479,7 +479,7 @@ src/content/blog/<track>/assets/<slug>/fig-01.png
 - PR 시: `npm run check` + 빌드 성공 + Lighthouse CI(경고)
 - main 머지 시: 배포
 - 링크 체크 주 1회 스케줄 실행(외부 링크 부패 대응)
-- **`npm run validate:json`** — 기계가 읽는 검증 결과(계약 v1, `docs/studio-plan.md` 3장). CI와 **로컬 글 작성기**가 같은 검증을 공유한다. 계약이 곧 스튜디오의 안전장치다
+- **`npm run validate:json`** — 기계가 읽는 검증 결과(계약 **v2**, `docs/studio-plan.md` 3장). CI와 **로컬 글 작성기**가 같은 검증을 공유한다. 계약이 곧 스튜디오의 안전장치다
 
 ### 12.3 콘텐츠 라이선스
 
@@ -641,7 +641,7 @@ ppaong.github.io/
 | M6 | 포트폴리오 (`/portfolio/`) | 스크롤 섹션, 연출, reduced-motion 대응, 이력서/연락 | reduced-motion에서 정적 열람 가능, LCP 이미지 1장 |
 | M7 | 마감 | SEO/OG/사이트맵, **분석(Umami) 연결**, Lighthouse, 접근성 감사, 404, print, `authoring.md` | Lighthouse 목표 달성, 접근성 이슈 0(치명) |
 
-> **진행 상태**: M0 ✅ · M1 ✅ · M2 ✅ · **M3 🔶 대부분 완료** — 패널 폭 조절·라이트박스·스크롤 앵커·인쇄 완료, 남은 것: 모바일 포커스 트랩·바텀시트 스냅(`panel-spec` 5.4) + 육안 검증
+> **진행 상태**: M0 ✅ · M1 ✅ · M2 ✅ · **M3 🔶 대부분 완료** + **본문 섹션↔자료 연동 구현**(`docs/design/section-spec.md`) — 남은 것: 모바일 포커스 트랩·바텀시트 스냅 + 육안 검증
 > 의존관계: M4는 M2(데이터 모델) 완료 후 착수. M3의 우 패널은 M2의 `materials` 스키마에 의존.
 > **확장 계획**: 글 작성기(스튜디오)는 **별도 private 저장소**에서, **블로그 개발 완료 후** 착수한다 → `docs/studio-plan.md` · `docs/adr/0002`. 두 저장소는 코드를 공유하지 않고 **CLI 계약**(`npm run validate:json`, `contractVersion`)으로 연결한다. 이 계약은 **현재 구현 완료**.
 > 스튜디오를 염두에 둔 작업 원칙: ① 데이터는 코드(TS)가 아니라 JSON에 둔다 ② 검증은 이 CLI 한 경로로만 노출한다 ③ 계약 형식을 바꾸면 버전을 올린다 ④ 경로 규약(`src/content/blog/<track>/<slug>.mdx`, `public/blog/<track>/`)을 유지한다 ⑤ `.github/workflows/**`는 도구가 만질 수 없다.
