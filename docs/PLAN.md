@@ -521,6 +521,7 @@ ppaong.github.io/
 │  ├─ graph-spec.md              # (M4 착수 전 작성)
 │  ├─ design/
 │  │  ├─ panel-spec.md           # 우측 패널 상세 스펙 (M3)
+│  │  ├─ section-spec.md         # 본문 섹션 ↔ 자료 연결 (메인 기능)
 │  │  └─ search-spec.md          # 검색 상세 스펙 (M5)
 │  ├─ adr/                       # 결정 기록 (D1~Dn)
 │  └─ reference/                 # 외부 참고자료 (codetree/ 는 gitignore)

@@ -101,10 +101,9 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
             </div>
           )}
 
-          <div class="materials-list" data-materials-list>
-            {
-              indexed.map((m) => (
-                <article
+          {
+            indexed.map((m) => (
+              <article
               class="material"
               id={`material-${m.id}`}
               data-material-id={m.id}
@@ -161,9 +160,7 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
               {m.caption && <p class="material__caption">{m.caption}</p>}
               {m.source && <p class="material__source">출처: {m.source}</p>}
             </article>
-          ))
-            }
-          </div>
+          ))}
         </>
       )
     }
@@ -195,7 +192,6 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
       } catch {
         /* 무시 */
       }
-      document.dispatchEvent(new CustomEvent('panel-tab-changed'));
     }
 
     tabs.forEach((tab, i) => {
@@ -232,7 +228,6 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
         } catch {
           /* 무시 */
         }
-        document.dispatchEvent(new CustomEvent('panel-filter-changed'));
       });
     });
 
@@ -304,139 +299,5 @@ const tocItems = headings.filter((h) => h.depth === 2 || h.depth === 3);
     }
   }
 
-  /**
-   * 패널이 본문 옆에 고정(docked)일 때, 각 자료 카드를 본문의
-   * `<FigureRef>` 위치와 평행하게 배치한다. (panel-spec 5.7)
-   *
-   *  · 카드 top 을 참조의 문서 오프셋에 맞추고, 겹치면 아래로 밀어낸다
-   *  · 패널 스크롤을 페이지 스크롤에 선형으로 연동한다 → 항상 평행
-   *  · 오버레이(<1024px)에서는 동작하지 않는다(기존 흐름 유지)
-   */
-  function initMaterialAlignment(): void {
-    const list = document.querySelector<HTMLElement>('[data-materials-list]');
-    const shell = document.getElementById('app-shell');
-    const scroller = document.querySelector<HTMLElement>('.article-panel__inner');
-    const view = document.querySelector<HTMLElement>('[data-panel-view="materials"]');
-    const body = document.querySelector<HTMLElement>('.article__body');
-    if (!list || !shell || !scroller || !view || !body) return;
-
-    alignMaterials(list, shell, scroller, view, body);
-  }
-
-  function alignMaterials(
-    list: HTMLElement,
-    shell: HTMLElement,
-    scroller: HTMLElement,
-    view: HTMLElement,
-    body: HTMLElement,
-  ): void {
-    const mqDesktop = window.matchMedia('(min-width: 1024px)');
-    /** 카드 사이 최소 간격 */
-    const GAP = 16;
-
-    let aligned = false;
-    let syncOffset = 0;
-    let frame = 0;
-
-    const cards = (): HTMLElement[] => Array.from(list.querySelectorAll<HTMLElement>('.material'));
-    const isDocked = (): boolean => mqDesktop.matches && shell.dataset.panel === 'open';
-    const isVisible = (): boolean => !view.hasAttribute('hidden');
-
-    function clear(): void {
-      aligned = false;
-      list.removeAttribute('data-aligned');
-      list.style.removeProperty('--list-h');
-      cards().forEach((card) => card.style.removeProperty('--material-top'));
-    }
-
-    /** 페이지 스크롤에 패널 스크롤을 연동 (선형이라 항상 평행이 유지된다) */
-    function sync(): void {
-      if (!aligned) return;
-      scroller.scrollTop = window.scrollY + syncOffset;
-    }
-
-    function align(): void {
-      if (!isDocked() || !isVisible()) {
-        clear();
-        return;
-      }
-
-      // 본문의 참조 위치 수집 (같은 자료를 여러 번 참조하면 첫 번째를 기준)
-      const refs = new Map<string, HTMLElement>();
-      document.querySelectorAll<HTMLElement>('[data-material-ref]').forEach((el) => {
-        const id = el.dataset.materialRef;
-        if (id && !refs.has(id)) refs.set(id, el);
-      });
-      if (refs.size === 0) {
-        clear();
-        return;
-      }
-
-      const bodyTop = body.getBoundingClientRect().top + window.scrollY;
-      const desired = new Map<string, number>();
-      refs.forEach((el, id) => {
-        desired.set(id, el.getBoundingClientRect().top + window.scrollY - bodyTop);
-      });
-
-      // 1) 절대 배치로 전환하고 각 카드의 top 을 계산
-      list.setAttribute('data-aligned', 'true');
-      let cursor = 0;
-      let maxBottom = 0;
-      cards().forEach((card) => {
-        const id = card.dataset.materialId ?? '';
-        const want = desired.get(id);
-        const top = want === undefined ? cursor : Math.max(want, cursor);
-        card.style.setProperty('--material-top', `${Math.round(top)}px`);
-        const height = card.getBoundingClientRect().height;
-        cursor = top + height + GAP;
-        maxBottom = Math.max(maxBottom, top + height);
-      });
-      // 마지막 참조까지 스크롤이 닿도록 꼬리 여백을 둔다
-      list.style.setProperty('--list-h', `${Math.round(maxBottom + scroller.clientHeight)}px`);
-
-      // 2) 연동 기준값: 대응하는 참조가 있는 첫 카드로 계산
-      const first = cards().find((card) => {
-        const id = card.dataset.materialId ?? '';
-        return !card.hidden && refs.has(id);
-      });
-      const firstRef = first ? refs.get(first.dataset.materialId ?? '') : undefined;
-      if (!first || !firstRef) {
-        clear();
-        return;
-      }
-
-      const previous = scroller.scrollTop;
-      scroller.scrollTop = 0;
-      const cardOffset = first.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-      const refTop = firstRef.getBoundingClientRect().top;
-      scroller.scrollTop = previous;
-
-      syncOffset = cardOffset - refTop - window.scrollY;
-      aligned = true;
-      sync();
-    }
-
-    function scheduleAlign(): void {
-      if (frame) cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        align();
-      });
-    }
-
-    window.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', scheduleAlign);
-    window.addEventListener('load', scheduleAlign);
-    mqDesktop.addEventListener('change', scheduleAlign);
-    document.addEventListener('shell-rendered', scheduleAlign);
-    document.addEventListener('panel-width-changed', scheduleAlign);
-    document.addEventListener('panel-tab-changed', scheduleAlign);
-    document.addEventListener('panel-filter-changed', scheduleAlign);
-    void document.fonts?.ready.then(scheduleAlign);
-
-    scheduleAlign();
-  }
-
   initPanel();
-  initMaterialAlignment();
 </script>

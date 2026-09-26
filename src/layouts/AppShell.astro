@@ -288,8 +288,6 @@ const { panelTitle = '보조 자료', panelCount = 0 } = Astro.props;
         shell.dataset.sheet = overlay === 'sheet' ? 'open' : 'closed';
       }
       syncA11y();
-      // 다른 컴포넌트(예: 자료 패널 정렬)가 반응할 수 있게 알린다
-      document.dispatchEvent(new CustomEvent('shell-rendered'));
     }
 
     function toggleNav(): void {
@@ -349,7 +347,6 @@ const { panelTitle = '보조 자료', panelCount = 0 } = Astro.props;
         resizer.removeAttribute('data-state');
         applyWidth(panelWidth, true);
         restoreAnchor(anchor);
-        document.dispatchEvent(new CustomEvent('panel-width-changed'));
       };
 
       resizer.addEventListener('pointermove', onMove);
@@ -379,7 +376,6 @@ const { panelTitle = '보조 자료', panelCount = 0 } = Astro.props;
       panelWidth = clampWidth(next);
       applyWidth(panelWidth, true);
       restoreAnchor(anchor);
-      document.dispatchEvent(new CustomEvent('panel-width-changed'));
     });
 
     resetBtn?.addEventListener('click', () => {
@@ -387,7 +383,6 @@ const { panelTitle = '보조 자료', panelCount = 0 } = Astro.props;
       panelWidth = defaultWidth();
       applyWidth(panelWidth, true);
       restoreAnchor(anchor);
-      document.dispatchEvent(new CustomEvent('panel-width-changed'));
     });
 
     // ── 인쇄 ────────────────────────────────────────────

@@ -176,6 +176,7 @@ M2까지 완료: 본문 라우트·헤더/브레드크럼·좌측 네비 트리�
 
 - [x] `200ms ease-out`, `prefers-reduced-motion`에서 즉시 전환
 - [x] **스크롤 앵커**: 폭이 바뀌어도 읽던 문단 위치 유지(리사이즈·접기·토글 시)
+- [x] (롤백됨) ~~자료 ↔ 참조 평행 정렬~~ → `docs/design/section-spec.md` 로 재설계
 - [x] 접힘 상태에서 우측 모서리에 **세로 탭**(`자료 n`)으로 존재 인지 → 클릭하면 열림
 - [x] `panel.open` / `panel.width` / `panel.tab` / `panel.group` 4개 상태 저장·복원
 
